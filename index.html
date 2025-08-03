@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
+
     <!-- SEO Meta Tags -->
     <title>Reddown - AI-Powered Markdown Editor for Redmine | Live Preview & Enhancement</title>
     <meta name="description" content="Modern Markdown editor with AI enhancement, live preview, and Redmine-specific syntax support. Features rich formatting toolbar, keyboard shortcuts, and OpenAI integration for content improvement.">
@@ -11,7 +11,7 @@
     <meta name="author" content="AUnhurian">
     <meta name="robots" content="index, follow">
     <meta name="language" content="English">
-    
+
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://AUnhurian.github.io/reddown/">
@@ -19,31 +19,32 @@
     <meta property="og:description" content="Modern Markdown editor with AI enhancement, live preview, and Redmine-specific syntax support. Create better documentation with intelligent formatting assistance.">
     <meta property="og:image" content="https://AUnhurian.github.io/reddown/images/apple-touch-icon.png">
     <meta property="og:site_name" content="Reddown">
-    
+
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://AUnhurian.github.io/reddown/">
     <meta property="twitter:title" content="Reddown - AI-Powered Markdown Editor for Redmine">
     <meta property="twitter:description" content="Modern Markdown editor with AI enhancement, live preview, and Redmine-specific syntax support.">
     <meta property="twitter:image" content="https://AUnhurian.github.io/reddown/images/apple-touch-icon.png">
-    
+    <meta name="google-site-verification" content="DZPcDGmVYE4SL4WnA1cFrj6ofMTk_iC4_JB4MAhVzQs" />
+
     <!-- Favicons -->
     <link rel="icon" type="image/png" href="./images/favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="./images/favicon.svg" />
     <link rel="shortcut icon" href="./images/favicon.ico" />
     <link rel="apple-touch-icon" sizes="180x180" href="./images/apple-touch-icon.png" />
     <link rel="manifest" href="./images/site.webmanifest" />
-    
+
     <!-- Theme Color -->
     <meta name="theme-color" content="#667eea">
     <meta name="msapplication-TileColor" content="#667eea">
-    
+
     <!-- Canonical URL -->
     <link rel="canonical" href="https://AUnhurian.github.io/reddown/">
-    
+
     <!-- Stylesheet -->
     <link rel="stylesheet" href="style.css">
-    
+
     <!-- Structured Data -->
     <script type="application/ld+json">
     {
@@ -89,7 +90,7 @@
                 <button id="theme-btn" title="Toggle theme">🌙 Theme</button>
             </div>
         </header>
-        
+
         <div class="editor-container">
             <div class="editor-panel">
                 <div class="panel-header">
@@ -130,7 +131,7 @@
                 </div>
                 <div id="monaco-editor"></div>
             </div>
-            
+
             <div class="preview-panel">
                 <div class="panel-header">
                     <h3>Live Preview</h3>
@@ -177,11 +178,11 @@
                 <div class="ai-settings">
                     <div class="setting-group">
                         <label for="openai-key">OpenAI API Key:</label>
-                        <input type="password" id="openai-key" placeholder="sk-..." 
+                        <input type="password" id="openai-key" placeholder="sk-..."
                                title="Your OpenAI API key will be stored locally">
                         <small>Your API key is stored securely in your browser and never sent to our servers.</small>
                     </div>
-                    
+
                     <div class="setting-group">
                         <h4>What AI Enhancement Does:</h4>
                         <ul class="ai-features">
@@ -193,7 +194,7 @@
                         </ul>
                     </div>
                 </div>
-                
+
                 <div class="modal-actions">
                     <button id="save-ai-settings" class="primary-btn">Save Settings</button>
                     <button id="enhance-now" class="secondary-btn" disabled>🤖 Enhance Current Content</button>
@@ -219,7 +220,7 @@
                         <div class="shortcut"><kbd>Cmd+U</kbd> <span>Underline text</span></div>
                         <div class="shortcut"><kbd>Cmd+`</kbd> <span>Inline code</span></div>
                     </div>
-                    
+
                     <div class="shortcuts-section">
                         <h4>Headings</h4>
                         <div class="shortcut"><kbd>Cmd+1</kbd> <span>Heading 1</span></div>
@@ -229,13 +230,13 @@
                         <div class="shortcut"><kbd>Cmd+5</kbd> <span>Heading 5</span></div>
                         <div class="shortcut"><kbd>Cmd+6</kbd> <span>Heading 6</span></div>
                     </div>
-                    
+
                     <div class="shortcuts-section">
                         <h4>Lists</h4>
                         <div class="shortcut"><kbd>Cmd+Shift+L</kbd> <span>Unordered list</span></div>
                         <div class="shortcut"><kbd>Cmd+Shift+O</kbd> <span>Ordered list</span></div>
                     </div>
-                    
+
                     <div class="shortcuts-section">
                         <h4>Insertions</h4>
                         <div class="shortcut"><kbd>Cmd+K</kbd> <span>Insert link</span></div>
@@ -243,7 +244,7 @@
                         <div class="shortcut"><kbd>Cmd+Shift+C</kbd> <span>Code block</span></div>
                         <div class="shortcut"><kbd>Cmd+Shift+T</kbd> <span>Insert table</span></div>
                     </div>
-                    
+
                     <div class="shortcuts-section">
                         <h4>Editing</h4>
                         <div class="shortcut"><kbd>Cmd+D</kbd> <span>Duplicate line</span></div>
@@ -255,7 +256,7 @@
             </div>
         </div>
     </div>
-    
+
     <script type="module" src="main.js"></script>
 </body>
 </html>
