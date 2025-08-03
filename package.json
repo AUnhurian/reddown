@@ -21,6 +21,6 @@
     "vite": "^5.0.0"
   },
   "keywords": ["markdown", "editor", "redmine", "vite", "ai", "openai"],
-  "author": "",
+  "author": "AUnhurian",
   "license": "MIT"
 }
