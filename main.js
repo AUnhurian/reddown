@@ -6,10 +6,12 @@ let markdownProcessor
 const STORAGE_KEY = 'reddown-content'
 
 function initEditor() {
+    const savedTheme = localStorage.getItem('reddown-theme') || 'vs'
+    
     editor = monaco.editor.create(document.getElementById('monaco-editor'), {
         value: getStoredContent(),
         language: 'markdown',
-        theme: 'vs-dark',
+        theme: savedTheme,
         automaticLayout: true,
         wordWrap: 'on',
         minimap: { enabled: false },
@@ -23,6 +25,15 @@ function initEditor() {
         autoClosingQuotes: 'always',
         autoIndent: 'advanced'
     })
+
+    // Apply saved theme to body
+    document.body.classList.toggle('dark-theme', savedTheme === 'vs-dark')
+    
+    // Update theme button text
+    const themeBtn = document.getElementById('theme-btn')
+    if (themeBtn) {
+        themeBtn.textContent = savedTheme === 'vs-dark' ? '☀️ Theme' : '🌙 Theme'
+    }
 
     editor.onDidChangeModelContent(() => {
         const content = editor.getValue()
@@ -201,13 +212,17 @@ function clearEditor() {
 }
 
 function toggleTheme() {
-    const currentTheme = editor.getModel().getOptions().theme
-    const newTheme = currentTheme === 'vs-dark' ? 'vs' : 'vs-dark'
+    const isDarkTheme = document.body.classList.contains('dark-theme')
+    const newTheme = isDarkTheme ? 'vs' : 'vs-dark'
+    
     monaco.editor.setTheme(newTheme)
-    document.body.classList.toggle('light-theme', newTheme === 'vs')
+    document.body.classList.toggle('dark-theme', newTheme === 'vs-dark')
     
     const themeBtn = document.getElementById('theme-btn')
-    themeBtn.textContent = newTheme === 'vs-dark' ? '🌙 Theme' : '☀️ Theme'
+    themeBtn.textContent = newTheme === 'vs-dark' ? '☀️ Theme' : '🌙 Theme'
+    
+    // Save theme preference
+    localStorage.setItem('reddown-theme', newTheme)
 }
 
 function showNotification(message, type = 'success') {
