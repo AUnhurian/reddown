@@ -1,21 +1,44 @@
 {
-  "name": "Reddown - Markdown Editor",
-  "short_name": "Reddown",
-  "icons": [
-    {
-      "src": "/images/web-app-manifest-192x192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "/images/web-app-manifest-512x512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
-    }
-  ],
-  "theme_color": "#ffffff",
-  "background_color": "#ffffff",
-  "display": "standalone"
+    "name": "Reddown - AI-Powered Markdown Editor",
+    "short_name": "Reddown",
+    "description": "Modern Markdown editor with AI enhancement and live preview for Redmine syntax",
+    "start_url": "/reddown/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#667eea",
+    "orientation": "portrait-primary",
+    "categories": ["productivity", "developer", "utilities"],
+    "lang": "en",
+    "icons": [
+        {
+            "src": "./web-app-manifest-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "./web-app-manifest-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "./favicon-96x96.png",
+            "sizes": "96x96",
+            "type": "image/png"
+        },
+        {
+            "src": "./apple-touch-icon.png",
+            "sizes": "180x180",
+            "type": "image/png"
+        }
+    ],
+    "screenshots": [
+        {
+            "src": "./apple-touch-icon.png",
+            "sizes": "180x180",
+            "type": "image/png",
+            "label": "Reddown Markdown Editor Interface"
+        }
+    ]
 }

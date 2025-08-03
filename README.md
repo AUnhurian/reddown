@@ -1,6 +1,15 @@
-# 🚀 Reddown - Markdown Editor for Redmine
-
-A modern, feature-rich Markdown editor with live preview specifically designed for Redmine syntax, enhanced with AI-powered content improvement.
+<div align="center">
+  <img src="./images/apple-touch-icon.png" alt="Reddown Logo" width="120" height="120">
+  
+  # 🚀 Reddown - Markdown Editor for Redmine
+  
+  A modern, feature-rich Markdown editor with live preview specifically designed for Redmine syntax, enhanced with AI-powered content improvement.
+  
+  [![GitHub Pages](https://img.shields.io/badge/demo-live-brightgreen)](https://AUnhurian.github.io/reddown/)
+  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+  [![Made with Vite](https://img.shields.io/badge/Made%20with-Vite-646CFF.svg)](https://vitejs.dev/)
+  [![AI Powered](https://img.shields.io/badge/AI-Powered-blueviolet)](https://openai.com/)
+</div>
 
 ## ✨ Features
 
@@ -36,8 +45,13 @@ A modern, feature-rich Markdown editor with live preview specifically designed f
 
 ## 🚀 Quick Start
 
-### Online Version
+### 🌐 Online Version
 Visit: **[https://AUnhurian.github.io/reddown](https://AUnhurian.github.io/reddown)**
+
+### 📱 PWA Support
+- Install as a Progressive Web App on mobile and desktop
+- Works offline after first load
+- Native app-like experience
 
 ### Local Development
 ```bash
@@ -110,6 +124,41 @@ This editor specifically supports Redmine's unique syntax:
 - Chrome/Edge 88+
 - Firefox 87+
 - Safari 14+
+
+## 📈 Features Overview
+
+| Feature | Description | Status |
+|---------|-------------|--------|
+| 🤖 AI Enhancement | OpenAI-powered content improvement | ✅ |
+| 📝 Live Preview | Real-time Markdown rendering | ✅ |
+| ⌨️ Keyboard Shortcuts | Full IDE-like shortcuts | ✅ |
+| 🎨 Themes | Light/Dark mode toggle | ✅ |
+| 📊 Table Generator | Visual table creation | ✅ |
+| 💾 Auto-save | Local storage persistence | ✅ |
+| 📱 PWA | Installable web app | ✅ |
+| 🔒 Privacy | Local-only data storage | ✅ |
+
+## 🎯 Use Cases
+
+- **Technical Documentation** - Create comprehensive docs with proper formatting
+- **Redmine Issues** - Write detailed bug reports and feature requests
+- **Project Planning** - Organize tasks and specifications
+- **Code Documentation** - Document APIs and code with syntax highlighting
+- **Meeting Notes** - Structure meetings with tables and lists
+
+### 🤖 AI Enhancement in Action
+```markdown
+Input:  Simple list: item1, item2, item3
+Output: 
+# Enhanced List
+
+## Key Items:
+- **Item 1**: Primary component
+- **Item 2**: Secondary element  
+- **Item 3**: Additional feature
+
+_Enhanced formatting with proper structure and Redmine syntax_
+```
 
 ## 🤝 Contributing
 
