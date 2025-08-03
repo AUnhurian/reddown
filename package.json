@@ -1,8 +1,13 @@
 {
   "name": "reddown",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Markdown editor with live preview for Redmine syntax",
   "type": "module",
+  "homepage": "https://AUnhurian.github.io/reddown",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AUnhurian/reddown.git"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -15,7 +20,7 @@
   "devDependencies": {
     "vite": "^5.0.0"
   },
-  "keywords": ["markdown", "editor", "redmine", "vite"],
+  "keywords": ["markdown", "editor", "redmine", "vite", "ai", "openai"],
   "author": "",
   "license": "MIT"
 }
