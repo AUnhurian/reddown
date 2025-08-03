@@ -485,6 +485,109 @@ body:not(.dark-theme) .shortcut span {
     color: #333333;
 }
 
+.ai-settings {
+    margin-bottom: 20px;
+}
+
+.setting-group {
+    margin-bottom: 20px;
+}
+
+.setting-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #333333;
+}
+
+.dark-theme .setting-group label {
+    color: #cccccc;
+}
+
+.setting-group input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d0d0d0;
+    border-radius: 4px;
+    background-color: #ffffff;
+    color: #333333;
+    font-size: 14px;
+    font-family: monospace;
+}
+
+.dark-theme .setting-group input {
+    background-color: #3c3c3c;
+    border: 1px solid #5c5c5c;
+    color: #cccccc;
+}
+
+.setting-group input:focus {
+    outline: none;
+    border-color: #0066cc;
+    box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.2);
+}
+
+.setting-group small {
+    display: block;
+    margin-top: 6px;
+    color: #666666;
+    font-size: 12px;
+}
+
+.dark-theme .setting-group small {
+    color: #888888;
+}
+
+.setting-group h4 {
+    margin-bottom: 10px;
+    color: #333333;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.dark-theme .setting-group h4 {
+    color: #cccccc;
+}
+
+.ai-features {
+    margin: 0;
+    padding-left: 20px;
+    color: #555555;
+}
+
+.dark-theme .ai-features {
+    color: #aaaaaa;
+}
+
+.ai-features li {
+    margin-bottom: 6px;
+    font-size: 13px;
+}
+
+#ai-btn {
+    background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+#ai-btn:hover {
+    background: linear-gradient(45deg, #5a67d8 0%, #6b46c1 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+#ai-btn:active {
+    transform: translateY(0);
+}
+
+.dark-theme #ai-btn {
+    background: linear-gradient(45deg, #4c1d95 0%, #5b21b6 100%);
+}
+
+.dark-theme #ai-btn:hover {
+    background: linear-gradient(45deg, #6366f1 0%, #7c3aed 100%);
+}
+
 #preview-content {
     flex: 1;
     padding: 20px;

@@ -4,6 +4,7 @@ import { createMarkdownProcessor } from './markdown.js'
 let editor
 let markdownProcessor
 const STORAGE_KEY = 'reddown-content'
+const AI_KEY_STORAGE = 'reddown-openai-key'
 
 function initEditor() {
     const savedTheme = localStorage.getItem('reddown-theme') || 'vs'
@@ -485,6 +486,161 @@ function initFormattingButtons() {
     document.getElementById('codeblock-btn').addEventListener('click', insertCodeBlock)
 }
 
+async function callOpenAI(content) {
+    const apiKey = localStorage.getItem(AI_KEY_STORAGE)
+    if (!apiKey) {
+        throw new Error('OpenAI API key not found. Please set it in AI settings.')
+    }
+    
+    const prompt = `You are an expert markdown formatter specializing in Redmine markup. Your task is to improve the formatting and presentation of the provided markdown content while preserving all original meaning and information.
+
+IMPORTANT REDMINE-SPECIFIC RULES:
+- Use _text_ for underlined text (NOT for emphasis/italics)
+- Use *text* for italic text
+- Use **text** for bold text
+
+Your improvements should focus on:
+1. Better structure and organization
+2. Improved readability with proper spacing
+3. Consistent formatting throughout
+4. Enhanced visual hierarchy with headings
+5. Better use of lists, tables, and code blocks where appropriate
+6. Adding appropriate line breaks and spacing
+
+PRESERVE:
+- All original content and meaning
+- All technical information
+- All links and references
+- All code snippets
+
+ENHANCE:
+- Visual structure and organization
+- Readability and clarity
+- Consistent markdown formatting
+- Proper use of Redmine syntax
+
+Here is the content to improve:
+
+${content}
+
+Return ONLY the improved markdown content without any explanations or additional commentary.`
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [
+                {
+                    role: 'user',
+                    content: prompt
+                }
+            ],
+            temperature: 0.3,
+            max_tokens: 4000
+        })
+    })
+
+    if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error?.message || 'OpenAI API request failed')
+    }
+
+    const data = await response.json()
+    return data.choices[0].message.content.trim()
+}
+
+function initAIModal() {
+    const aiModal = document.getElementById('ai-modal')
+    const aiBtn = document.getElementById('ai-btn')
+    const closeAiBtn = document.getElementById('close-ai-modal')
+    const saveSettingsBtn = document.getElementById('save-ai-settings')
+    const enhanceNowBtn = document.getElementById('enhance-now')
+    const cancelSettingsBtn = document.getElementById('cancel-ai-settings')
+    const apiKeyInput = document.getElementById('openai-key')
+    
+    function showAiModal() {
+        aiModal.style.display = 'flex'
+        loadAISettings()
+    }
+    
+    function hideAiModal() {
+        aiModal.style.display = 'none'
+    }
+    
+    function loadAISettings() {
+        const savedKey = localStorage.getItem(AI_KEY_STORAGE)
+        if (savedKey) {
+            apiKeyInput.value = savedKey
+            enhanceNowBtn.disabled = false
+        } else {
+            apiKeyInput.value = ''
+            enhanceNowBtn.disabled = true
+        }
+    }
+    
+    function saveAISettings() {
+        const apiKey = apiKeyInput.value.trim()
+        if (!apiKey) {
+            showNotification('Please enter a valid OpenAI API key', 'error')
+            return
+        }
+        
+        if (!apiKey.startsWith('sk-')) {
+            showNotification('API key should start with "sk-"', 'error')
+            return
+        }
+        
+        localStorage.setItem(AI_KEY_STORAGE, apiKey)
+        enhanceNowBtn.disabled = false
+        showNotification('AI settings saved successfully!')
+    }
+    
+    async function enhanceContent() {
+        const content = editor.getValue().trim()
+        if (!content) {
+            showNotification('No content to enhance', 'error')
+            return
+        }
+        
+        const originalBtnText = enhanceNowBtn.textContent
+        enhanceNowBtn.textContent = '🔄 Enhancing...'
+        enhanceNowBtn.disabled = true
+        
+        try {
+            const enhancedContent = await callOpenAI(content)
+            editor.setValue(enhancedContent)
+            showNotification('Content enhanced successfully!')
+            hideAiModal()
+        } catch (error) {
+            console.error('AI Enhancement error:', error)
+            showNotification(`Enhancement failed: ${error.message}`, 'error')
+        } finally {
+            enhanceNowBtn.textContent = originalBtnText
+            enhanceNowBtn.disabled = false
+        }
+    }
+    
+    aiBtn.addEventListener('click', showAiModal)
+    closeAiBtn.addEventListener('click', hideAiModal)
+    cancelSettingsBtn.addEventListener('click', hideAiModal)
+    saveSettingsBtn.addEventListener('click', saveAISettings)
+    enhanceNowBtn.addEventListener('click', enhanceContent)
+    
+    // Enable enhance button when API key is entered
+    apiKeyInput.addEventListener('input', (e) => {
+        const hasKey = e.target.value.trim().length > 0
+        enhanceNowBtn.disabled = !hasKey
+    })
+    
+    aiModal.addEventListener('click', (e) => {
+        if (e.target === aiModal) hideAiModal()
+    })
+}
+
 function initHelpModal() {
     const helpModal = document.getElementById('help-modal')
     const helpBtn = document.getElementById('help-btn')
@@ -505,10 +661,15 @@ function initHelpModal() {
         if (e.target === helpModal) hideHelpModal()
     })
     
-    // ESC key to close help modal
+    // ESC key to close modals
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && helpModal.style.display === 'flex') {
-            hideHelpModal()
+        if (e.key === 'Escape') {
+            if (helpModal.style.display === 'flex') {
+                hideHelpModal()
+            }
+            if (document.getElementById('ai-modal').style.display === 'flex') {
+                document.getElementById('ai-modal').style.display = 'none'
+            }
         }
     })
 }
@@ -521,6 +682,7 @@ function initEventListeners() {
     
     initFormattingButtons()
     initTableModal()
+    initAIModal()
     initHelpModal()
 }
 

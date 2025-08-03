@@ -11,6 +11,7 @@
         <header class="toolbar">
             <h1>Reddown</h1>
             <div class="toolbar-actions">
+                <button id="ai-btn" title="AI Enhancement">🤖 AI</button>
                 <button id="help-btn" title="Keyboard shortcuts">⌨️ Help</button>
                 <button id="save-btn" title="Save as .md file">💾 Save</button>
                 <button id="copy-btn" title="Copy to clipboard">📋 Copy</button>
@@ -80,6 +81,43 @@
                 <div class="modal-actions">
                     <button id="insert-table" class="primary-btn">Insert Table</button>
                     <button id="cancel-table" class="secondary-btn">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Settings Modal -->
+    <div id="ai-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>AI Enhancement Settings</h3>
+                <button id="close-ai-modal" class="close-btn">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="ai-settings">
+                    <div class="setting-group">
+                        <label for="openai-key">OpenAI API Key:</label>
+                        <input type="password" id="openai-key" placeholder="sk-..." 
+                               title="Your OpenAI API key will be stored locally">
+                        <small>Your API key is stored securely in your browser and never sent to our servers.</small>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <h4>What AI Enhancement Does:</h4>
+                        <ul class="ai-features">
+                            <li>Improves markdown formatting and structure</li>
+                            <li>Maintains all original content and meaning</li>
+                            <li>Applies Redmine-specific syntax (underline with _text_)</li>
+                            <li>Enhances readability with better organization</li>
+                            <li>Adds proper spacing and formatting</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="modal-actions">
+                    <button id="save-ai-settings" class="primary-btn">Save Settings</button>
+                    <button id="enhance-now" class="secondary-btn" disabled>🤖 Enhance Current Content</button>
+                    <button id="cancel-ai-settings" class="secondary-btn">Cancel</button>
                 </div>
             </div>
         </div>
