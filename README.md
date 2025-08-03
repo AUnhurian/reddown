@@ -17,7 +17,8 @@
 - **Monaco Editor** with syntax highlighting
 - **Live Preview** with real-time rendering
 - **Auto-save** to localStorage
-- **Redmine-specific syntax** support (`_text_` for underline)
+- **Dual Mode Support**: Switch between Redmine and Standard Markdown
+- **Smart Mode Detection** with visual toggle
 
 ### 🎨 **Rich Formatting Toolbar**
 - Text formatting: **Bold**, *Italic*, _Underline_, `Code`
@@ -33,9 +34,10 @@
 
 ### 🤖 **AI Enhancement**
 - **OpenAI integration** for content improvement
+- **Mode-aware prompts**: Different AI behavior for Redmine vs Standard
 - Maintains original content and meaning
 - Enhances formatting and structure
-- Respects Redmine-specific syntax
+- Respects selected markdown syntax rules
 
 ### 🎯 **User Experience**
 - **Light/Dark theme** toggle
@@ -78,6 +80,14 @@ npm run build
 
 Your API key is stored securely in your browser and never sent to our servers.
 
+## 🔄 Switching Markdown Modes
+
+1. Look for the **mode toggle** in the editor header (next to "Markdown Editor")
+2. **Red position** = Redmine Mode (supports underline with `_text_`)
+3. **Blue position** = Standard Mode (CommonMark compliant)
+4. Your preference is **automatically saved** and restored on next visit
+5. AI prompts **automatically adjust** based on selected mode
+
 ## ⌨️ Keyboard Shortcuts
 
 ### Text Formatting
@@ -102,14 +112,38 @@ Your API key is stored securely in your browser and never sent to our servers.
 - `Cmd+Delete` - Delete line
 - `Alt+↑/↓` - Move line
 
-## 🔧 Redmine Syntax
+## 🔄 Markdown Modes
 
-This editor specifically supports Redmine's unique syntax:
+Reddown supports two markdown modes that you can switch between using the toggle in the editor header:
 
-- `_text_` → <u>Underlined text</u> (not italic)
+### 🔴 Redmine Mode (Default)
+Perfect for Redmine documentation and issues:
+
+- `_text_` → <u>Underlined text</u> (Redmine-specific)
 - `*text*` → *Italic text*
 - `**text**` → **Bold text**
-- Standard Markdown for everything else
+- All standard Markdown features
+- AI optimized for Redmine syntax
+
+### 🔵 Standard Mode
+Standard CommonMark compliance:
+
+- `_text_` → *Italic text* (standard behavior)
+- `*text*` → *Italic text*
+- `**text**` → **Bold text**
+- `__text__` → **Bold text**
+- No underline support (use HTML `<u>text</u>` if needed)
+- AI optimized for CommonMark syntax
+
+### 🔧 Mode Features
+
+| Feature | Redmine Mode | Standard Mode |
+|---------|--------------|---------------|
+| Underline button | ✅ Active | ❌ Disabled |
+| `_text_` behavior | Underline | Italic |
+| AI Enhancement | Redmine-aware | CommonMark-aware |
+| Welcome content | Redmine examples | Standard examples |
+| Auto-save mode | ✅ Remembered | ✅ Remembered |
 
 ## 🛠️ Tech Stack
 
@@ -129,6 +163,7 @@ This editor specifically supports Redmine's unique syntax:
 
 | Feature | Description | Status |
 |---------|-------------|--------|
+| 🔄 Dual Markdown Modes | Redmine + Standard CommonMark | ✅ |
 | 🤖 AI Enhancement | OpenAI-powered content improvement | ✅ |
 | 📝 Live Preview | Real-time Markdown rendering | ✅ |
 | ⌨️ Keyboard Shortcuts | Full IDE-like shortcuts | ✅ |
@@ -140,13 +175,16 @@ This editor specifically supports Redmine's unique syntax:
 
 ## 🎯 Use Cases
 
-- **Technical Documentation** - Create comprehensive docs with proper formatting
-- **Redmine Issues** - Write detailed bug reports and feature requests
-- **Project Planning** - Organize tasks and specifications
+- **Redmine Documentation** - Perfect for Redmine wikis and issue descriptions with native underline support
+- **Standard Markdown** - GitHub README files, documentation sites, and general markdown content
+- **Technical Documentation** - Create comprehensive docs with proper formatting in any mode
+- **Project Planning** - Organize tasks and specifications with mode-appropriate formatting
 - **Code Documentation** - Document APIs and code with syntax highlighting
-- **Meeting Notes** - Structure meetings with tables and lists
+- **Cross-platform Content** - Switch modes to match your target platform requirements
 
 ### 🤖 AI Enhancement in Action
+
+**Redmine Mode:**
 ```markdown
 Input:  Simple list: item1, item2, item3
 Output: 
@@ -158,6 +196,20 @@ Output:
 - **Item 3**: Additional feature
 
 _Enhanced formatting with proper structure and Redmine syntax_
+```
+
+**Standard Mode:**
+```markdown
+Input:  Simple list: item1, item2, item3
+Output:
+# Enhanced List
+
+## Key Items:
+- **Item 1**: Primary component
+- *Item 2*: Secondary element  
+- **Item 3**: Additional feature
+
+*Enhanced formatting with CommonMark compliance*
 ```
 
 ## 🤝 Contributing
