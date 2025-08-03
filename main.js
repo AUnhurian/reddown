@@ -1,5 +1,5 @@
 import * as monaco from 'monaco-editor'
-import { createMarkdownProcessor } from './markdown.js'
+import { createMarkdownProcessor, getMarkdownMode, setMarkdownMode } from './markdown.js'
 
 let editor
 let markdownProcessor
@@ -8,6 +8,7 @@ const AI_KEY_STORAGE = 'reddown-openai-key'
 
 function initEditor() {
     const savedTheme = localStorage.getItem('reddown-theme') || 'vs'
+    const isRedmineMode = getMarkdownMode()
     
     editor = monaco.editor.create(document.getElementById('monaco-editor'), {
         value: getStoredContent(),
@@ -36,6 +37,13 @@ function initEditor() {
         themeBtn.textContent = savedTheme === 'vs-dark' ? '☀️ Theme' : '🌙 Theme'
     }
 
+    // Initialize markdown mode toggle
+    const modeToggle = document.getElementById('markdown-mode')
+    if (modeToggle) {
+        modeToggle.checked = isRedmineMode
+        modeToggle.addEventListener('change', handleModeToggle)
+    }
+
     editor.onDidChangeModelContent(() => {
         const content = editor.getValue()
         updatePreview(content)
@@ -44,6 +52,35 @@ function initEditor() {
 
     addEditorCommands()
     updatePreview(editor.getValue())
+}
+
+function handleModeToggle(event) {
+    const isRedmineMode = event.target.checked
+    setMarkdownMode(isRedmineMode)
+    
+    // Recreate markdown processor with new mode
+    markdownProcessor = createMarkdownProcessor(isRedmineMode)
+    
+    // Update preview with new processor
+    updatePreview(editor.getValue())
+    
+    // Update button tooltips
+    updateButtonTooltips(isRedmineMode)
+    
+    showNotification(`Switched to ${isRedmineMode ? 'Redmine' : 'Standard'} Markdown mode`)
+}
+
+function updateButtonTooltips(isRedmineMode) {
+    const underlineBtn = document.getElementById('underline-btn')
+    if (underlineBtn) {
+        if (isRedmineMode) {
+            underlineBtn.title = 'Underline (Cmd+U) - Redmine specific'
+            underlineBtn.style.opacity = '1'
+        } else {
+            underlineBtn.title = 'Underline not available in Standard Markdown'
+            underlineBtn.style.opacity = '0.5'
+        }
+    }
 }
 
 function addEditorCommands() {
@@ -142,7 +179,9 @@ function updatePreview(content) {
 }
 
 function getStoredContent() {
-    return localStorage.getItem(STORAGE_KEY) || `# Welcome to Reddown
+    const isRedmineMode = getMarkdownMode()
+    
+    const redmineContent = `# Welcome to Reddown
 
 This is a Markdown editor with live preview, designed for Redmine syntax.
 
@@ -152,7 +191,14 @@ This is a Markdown editor with live preview, designed for Redmine syntax.
 - _Underlined text_ (Redmine-specific)
 - \`Inline code\`
 - Lists and tables
-- Live preview
+- 🤖 AI-powered enhancement
+
+### Redmine Mode Active
+
+In Redmine mode:
+- Use \`_text_\` for _underlined text_
+- Use \`*text*\` for *italic text*
+- Use \`**text**\` for **bold text**
 
 ### Example List
 
@@ -176,7 +222,52 @@ function hello() {
 }
 \`\`\`
 
-Try editing this content to see the live preview in action!`
+Try switching to Standard Markdown mode using the toggle above!`
+
+    const standardContent = `# Welcome to Reddown
+
+This is a Markdown editor with live preview, now in Standard Markdown mode.
+
+## Features
+
+- **Bold text** and *italic text*
+- Standard CommonMark syntax
+- \`Inline code\`
+- Lists and tables
+- 🤖 AI-powered enhancement
+
+### Standard Mode Active
+
+In Standard mode:
+- Use \`_text_\` or \`*text*\` for *italic text*
+- Use \`**text**\` or \`__text__\` for **bold text**
+- No underline support (use HTML \`<u>text</u>\` if needed)
+
+### Example List
+
+1. First item
+2. Second item
+   - Nested item
+   - Another nested item
+
+### Example Table
+
+| Header 1 | Header 2 |
+|----------|----------|
+| Cell 1   | Cell 2   |
+| Cell 3   | Cell 4   |
+
+### Code Block
+
+\`\`\`javascript
+function hello() {
+    console.log("Hello, Reddown!");
+}
+\`\`\`
+
+Try switching to Redmine mode using the toggle above!`
+    
+    return localStorage.getItem(STORAGE_KEY) || (isRedmineMode ? redmineContent : standardContent)
 }
 
 function saveToStorage(content) {
@@ -238,6 +329,12 @@ function showNotification(message, type = 'success') {
 }
 
 function wrapSelection(before, after = before) {
+    // Check if underline is being used in non-Redmine mode
+    if (before === '_' && !getMarkdownMode()) {
+        showNotification('Underline is only available in Redmine mode', 'error')
+        return
+    }
+    
     const selection = editor.getSelection()
     const selectedText = editor.getModel().getValueInRange(selection)
     
@@ -492,7 +589,9 @@ async function callOpenAI(content) {
         throw new Error('OpenAI API key not found. Please set it in AI settings.')
     }
     
-    const prompt = `You are an expert markdown formatter specializing in Redmine markup. Your task is to improve the formatting and presentation of the provided markdown content while preserving all original meaning and information.
+    const isRedmineMode = getMarkdownMode()
+    
+    const redminePrompt = `You are an expert markdown formatter specializing in Redmine markup. Your task is to improve the formatting and presentation of the provided markdown content while preserving all original meaning and information.
 
 IMPORTANT REDMINE-SPECIFIC RULES:
 - Use _text_ for underlined text (NOT for emphasis/italics)
@@ -524,6 +623,42 @@ Here is the content to improve:
 ${content}
 
 Return ONLY the improved markdown content without any explanations or additional commentary.`
+
+    const standardPrompt = `You are an expert markdown formatter specializing in standard CommonMark syntax. Your task is to improve the formatting and presentation of the provided markdown content while preserving all original meaning and information.
+
+IMPORTANT STANDARD MARKDOWN RULES:
+- Use _text_ or *text* for italic text (emphasis)
+- Use **text** or __text__ for bold text (strong emphasis)
+- Use \`text\` for inline code
+- Follow CommonMark specification strictly
+
+Your improvements should focus on:
+1. Better structure and organization
+2. Improved readability with proper spacing
+3. Consistent formatting throughout
+4. Enhanced visual hierarchy with headings
+5. Better use of lists, tables, and code blocks where appropriate
+6. Adding appropriate line breaks and spacing
+
+PRESERVE:
+- All original content and meaning
+- All technical information
+- All links and references
+- All code snippets
+
+ENHANCE:
+- Visual structure and organization
+- Readability and clarity
+- Consistent standard markdown formatting
+- Proper use of CommonMark syntax
+
+Here is the content to improve:
+
+${content}
+
+Return ONLY the improved markdown content without any explanations or additional commentary.`
+
+    const prompt = isRedmineMode ? redminePrompt : standardPrompt
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
@@ -687,9 +822,13 @@ function initEventListeners() {
 }
 
 async function init() {
-    markdownProcessor = createMarkdownProcessor()
+    const isRedmineMode = getMarkdownMode()
+    markdownProcessor = createMarkdownProcessor(isRedmineMode)
     initEditor()
     initEventListeners()
+    
+    // Initialize button tooltips based on mode
+    updateButtonTooltips(isRedmineMode)
 }
 
 init()

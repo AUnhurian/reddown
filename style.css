@@ -105,6 +105,9 @@ body.dark-theme {
     background-color: #f8f8f8;
     border-bottom: 1px solid #e0e0e0;
     flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .dark-theme .panel-header {
@@ -120,6 +123,93 @@ body.dark-theme {
 
 .dark-theme .panel-header h3 {
     color: #cccccc;
+}
+
+.mode-toggle {
+    display: flex;
+    align-items: center;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    background-color: #ccc;
+    border-radius: 24px;
+    transition: background-color 0.3s;
+    margin-right: 8px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    border-radius: 50%;
+    transition: transform 0.3s;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background-color: #e74c3c;
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+    transform: translateX(20px);
+}
+
+.dark-theme .toggle-switch input:checked + .toggle-slider {
+    background-color: #c0392b;
+}
+
+.toggle-label {
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.mode-text {
+    color: #666666;
+    transition: color 0.3s;
+}
+
+.dark-theme .mode-text {
+    color: #aaaaaa;
+}
+
+.toggle-switch input:checked ~ .toggle-label .mode-text[data-mode="redmine"] {
+    color: #e74c3c;
+    font-weight: 600;
+}
+
+.toggle-switch input:not(:checked) ~ .toggle-label .mode-text[data-mode="standard"] {
+    color: #0066cc;
+    font-weight: 600;
+}
+
+.dark-theme .toggle-switch input:checked ~ .toggle-label .mode-text[data-mode="redmine"] {
+    color: #c0392b;
+}
+
+.dark-theme .toggle-switch input:not(:checked) ~ .toggle-label .mode-text[data-mode="standard"] {
+    color: #4a9eff;
 }
 
 .formatting-toolbar {

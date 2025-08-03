@@ -79,7 +79,7 @@ function underlinePlugin(md) {
     md.renderer.rules.underline_close = () => '</u>'
 }
 
-export function createMarkdownProcessor() {
+export function createMarkdownProcessor(isRedmineMode = true) {
     const md = new MarkdownIt({
         html: true,
         linkify: true,
@@ -87,7 +87,18 @@ export function createMarkdownProcessor() {
         breaks: true
     })
     
-    md.use(underlinePlugin)
+    // Only use underline plugin in Redmine mode
+    if (isRedmineMode) {
+        md.use(underlinePlugin)
+    }
     
     return md
+}
+
+export function getMarkdownMode() {
+    return localStorage.getItem('reddown-markdown-mode') !== 'standard'
+}
+
+export function setMarkdownMode(isRedmineMode) {
+    localStorage.setItem('reddown-markdown-mode', isRedmineMode ? 'redmine' : 'standard')
 }
