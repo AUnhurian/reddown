@@ -1,0 +1,316 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background-color: #1e1e1e;
+    color: #d4d4d4;
+    height: 100vh;
+    overflow: hidden;
+}
+
+body.light-theme {
+    background-color: #ffffff;
+    color: #333333;
+}
+
+.app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px;
+    background-color: #2d2d30;
+    border-bottom: 1px solid #3e3e42;
+    flex-shrink: 0;
+}
+
+body.light-theme .toolbar {
+    background-color: #f3f3f3;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.toolbar h1 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #cccccc;
+}
+
+body.light-theme .toolbar h1 {
+    color: #333333;
+}
+
+.toolbar-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.toolbar-actions button {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    background-color: #0e639c;
+    color: white;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.toolbar-actions button:hover {
+    background-color: #1177bb;
+}
+
+body.light-theme .toolbar-actions button {
+    background-color: #0066cc;
+}
+
+body.light-theme .toolbar-actions button:hover {
+    background-color: #0052a3;
+}
+
+.editor-container {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.editor-panel,
+.preview-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.editor-panel {
+    border-right: 1px solid #3e3e42;
+}
+
+body.light-theme .editor-panel {
+    border-right: 1px solid #e0e0e0;
+}
+
+.panel-header {
+    padding: 10px 16px;
+    background-color: #252526;
+    border-bottom: 1px solid #3e3e42;
+    flex-shrink: 0;
+}
+
+body.light-theme .panel-header {
+    background-color: #f8f8f8;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.panel-header h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #cccccc;
+}
+
+body.light-theme .panel-header h3 {
+    color: #333333;
+}
+
+#monaco-editor {
+    flex: 1;
+    overflow: hidden;
+}
+
+#preview-content {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    background-color: #1e1e1e;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    line-height: 1.6;
+}
+
+body.light-theme #preview-content {
+    background-color: #ffffff;
+    color: #333333;
+}
+
+#preview-content h1,
+#preview-content h2,
+#preview-content h3,
+#preview-content h4,
+#preview-content h5,
+#preview-content h6 {
+    margin-top: 24px;
+    margin-bottom: 16px;
+    font-weight: 600;
+    line-height: 1.25;
+}
+
+#preview-content h1 {
+    font-size: 2em;
+}
+
+#preview-content h2 {
+    font-size: 1.5em;
+}
+
+#preview-content h3 {
+    font-size: 1.25em;
+}
+
+#preview-content p {
+    margin-bottom: 16px;
+}
+
+#preview-content strong {
+    font-weight: 600;
+}
+
+#preview-content em {
+    font-style: italic;
+}
+
+#preview-content u {
+    text-decoration: underline;
+}
+
+#preview-content code {
+    padding: 2px 4px;
+    background-color: #3c3c3c;
+    border-radius: 3px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.85em;
+}
+
+body.light-theme #preview-content code {
+    background-color: #f6f8fa;
+    color: #d73a49;
+}
+
+#preview-content pre {
+    padding: 16px;
+    background-color: #2d2d30;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin-bottom: 16px;
+}
+
+body.light-theme #preview-content pre {
+    background-color: #f6f8fa;
+}
+
+#preview-content pre code {
+    background: none;
+    padding: 0;
+    font-size: 13px;
+    color: inherit;
+}
+
+#preview-content ul,
+#preview-content ol {
+    margin-bottom: 16px;
+    padding-left: 30px;
+}
+
+#preview-content li {
+    margin-bottom: 4px;
+}
+
+#preview-content table {
+    border-collapse: collapse;
+    margin-bottom: 16px;
+    width: 100%;
+}
+
+#preview-content th,
+#preview-content td {
+    border: 1px solid #3e3e42;
+    padding: 8px 12px;
+    text-align: left;
+}
+
+body.light-theme #preview-content th,
+body.light-theme #preview-content td {
+    border: 1px solid #e0e0e0;
+}
+
+#preview-content th {
+    background-color: #2d2d30;
+    font-weight: 600;
+}
+
+body.light-theme #preview-content th {
+    background-color: #f6f8fa;
+}
+
+#preview-content blockquote {
+    border-left: 4px solid #0e639c;
+    padding-left: 16px;
+    margin-bottom: 16px;
+    color: #888888;
+}
+
+body.light-theme #preview-content blockquote {
+    color: #666666;
+}
+
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 12px 16px;
+    border-radius: 4px;
+    color: white;
+    font-size: 14px;
+    z-index: 1000;
+    animation: slideIn 0.3s ease-out;
+}
+
+.notification.success {
+    background-color: #28a745;
+}
+
+.notification.error {
+    background-color: #dc3545;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@media (max-width: 768px) {
+    .editor-container {
+        flex-direction: column;
+    }
+    
+    .editor-panel {
+        border-right: none;
+        border-bottom: 1px solid #3e3e42;
+    }
+    
+    body.light-theme .editor-panel {
+        border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .toolbar-actions {
+        gap: 5px;
+    }
+    
+    .toolbar-actions button {
+        padding: 5px 8px;
+        font-size: 12px;
+    }
+}

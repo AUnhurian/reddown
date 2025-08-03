@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reddown - Markdown Editor for Redmine</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app">
+        <header class="toolbar">
+            <h1>Reddown</h1>
+            <div class="toolbar-actions">
+                <button id="save-btn" title="Save as .md file">💾 Save</button>
+                <button id="copy-btn" title="Copy to clipboard">📋 Copy</button>
+                <button id="clear-btn" title="Clear editor">🗑️ Clear</button>
+                <button id="theme-btn" title="Toggle theme">🌙 Theme</button>
+            </div>
+        </header>
+        
+        <div class="editor-container">
+            <div class="editor-panel">
+                <div class="panel-header">
+                    <h3>Markdown Editor</h3>
+                </div>
+                <div id="monaco-editor"></div>
+            </div>
+            
+            <div class="preview-panel">
+                <div class="panel-header">
+                    <h3>Live Preview</h3>
+                </div>
+                <div id="preview-content"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module" src="main.js"></script>
+</body>
+</html>
