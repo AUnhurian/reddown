@@ -50,6 +50,78 @@ function addEditorCommands() {
     editor.addCommand(monaco.KeyMod.Alt | monaco.KeyCode.DownArrow, () => {
         editor.trigger('keyboard', 'editor.action.moveLinesDownAction', {})
     })
+
+    // Text formatting shortcuts
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyB, () => {
+        wrapSelection('**')
+    })
+
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyI, () => {
+        wrapSelection('*')
+    })
+
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyU, () => {
+        wrapSelection('_')
+    })
+
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Backquote, () => {
+        wrapSelection('`')
+    })
+
+    // Heading shortcuts
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Digit1, () => {
+        insertHeading(1)
+    })
+
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Digit2, () => {
+        insertHeading(2)
+    })
+
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Digit3, () => {
+        insertHeading(3)
+    })
+
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Digit4, () => {
+        insertHeading(4)
+    })
+
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Digit5, () => {
+        insertHeading(5)
+    })
+
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Digit6, () => {
+        insertHeading(6)
+    })
+
+    // List shortcuts
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyL, () => {
+        insertList(false) // unordered list
+    })
+
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyO, () => {
+        insertList(true) // ordered list
+    })
+
+    // Link and image shortcuts
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyK, () => {
+        insertLink()
+    })
+
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyI, () => {
+        insertImage()
+    })
+
+    // Code block shortcut
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyC, () => {
+        insertCodeBlock()
+    })
+
+    // Table shortcut
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyT, () => {
+        document.getElementById('table-modal').style.display = 'flex'
+        const event = new Event('click')
+        document.getElementById('generate-table-structure').dispatchEvent(event)
+    })
 }
 
 function updatePreview(content) {
@@ -149,11 +221,292 @@ function showNotification(message, type = 'success') {
     }, 3000)
 }
 
+function wrapSelection(before, after = before) {
+    const selection = editor.getSelection()
+    const selectedText = editor.getModel().getValueInRange(selection)
+    
+    if (selectedText) {
+        const wrappedText = before + selectedText + after
+        editor.executeEdits('format', [{
+            range: selection,
+            text: wrappedText,
+            forceMoveMarkers: true
+        }])
+    } else {
+        const position = editor.getPosition()
+        const placeholderText = 'text'
+        const wrappedText = before + placeholderText + after
+        editor.executeEdits('format', [{
+            range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column),
+            text: wrappedText,
+            forceMoveMarkers: true
+        }])
+        
+        editor.setSelection(new monaco.Range(
+            position.lineNumber, 
+            position.column + before.length,
+            position.lineNumber, 
+            position.column + before.length + placeholderText.length
+        ))
+    }
+    editor.focus()
+}
+
+function insertAtCursor(text, selectText = '') {
+    const position = editor.getPosition()
+    editor.executeEdits('insert', [{
+        range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column),
+        text: text,
+        forceMoveMarkers: true
+    }])
+    
+    if (selectText) {
+        const startIndex = text.indexOf(selectText)
+        if (startIndex !== -1) {
+            editor.setSelection(new monaco.Range(
+                position.lineNumber, 
+                position.column + startIndex,
+                position.lineNumber, 
+                position.column + startIndex + selectText.length
+            ))
+        }
+    }
+    editor.focus()
+}
+
+function insertHeading(level) {
+    const position = editor.getPosition()
+    const lineContent = editor.getModel().getLineContent(position.lineNumber)
+    const headingPrefix = '#'.repeat(level) + ' '
+    
+    if (lineContent.trim() === '') {
+        insertAtCursor(headingPrefix + 'Heading text', 'Heading text')
+    } else {
+        const range = new monaco.Range(position.lineNumber, 1, position.lineNumber, 1)
+        editor.executeEdits('heading', [{
+            range: range,
+            text: headingPrefix,
+            forceMoveMarkers: true
+        }])
+    }
+    editor.focus()
+}
+
+function insertList(ordered = false) {
+    const position = editor.getPosition()
+    const lineContent = editor.getModel().getLineContent(position.lineNumber)
+    const prefix = ordered ? '1. ' : '- '
+    
+    if (lineContent.trim() === '') {
+        insertAtCursor(prefix + 'List item', 'List item')
+    } else {
+        const range = new monaco.Range(position.lineNumber, 1, position.lineNumber, 1)
+        editor.executeEdits('list', [{
+            range: range,
+            text: prefix,
+            forceMoveMarkers: true
+        }])
+    }
+    editor.focus()
+}
+
+function insertLink() {
+    const selection = editor.getSelection()
+    const selectedText = editor.getModel().getValueInRange(selection)
+    
+    if (selectedText) {
+        const linkText = `[${selectedText}](url)`
+        editor.executeEdits('link', [{
+            range: selection,
+            text: linkText,
+            forceMoveMarkers: true
+        }])
+        
+        const urlStart = selectedText.length + 3
+        editor.setSelection(new monaco.Range(
+            selection.startLineNumber,
+            selection.startColumn + urlStart,
+            selection.startLineNumber,
+            selection.startColumn + urlStart + 3
+        ))
+    } else {
+        insertAtCursor('[link text](url)', 'link text')
+    }
+}
+
+function insertImage() {
+    insertAtCursor('![alt text](image-url)', 'alt text')
+}
+
+function insertCodeBlock() {
+    const position = editor.getPosition()
+    const codeBlockText = '```language\ncode here\n```'
+    
+    editor.executeEdits('codeblock', [{
+        range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column),
+        text: codeBlockText,
+        forceMoveMarkers: true
+    }])
+    
+    editor.setSelection(new monaco.Range(
+        position.lineNumber,
+        position.column + 3,
+        position.lineNumber,
+        position.column + 11
+    ))
+    editor.focus()
+}
+
+function initTableModal() {
+    const modal = document.getElementById('table-modal')
+    const closeBtn = document.getElementById('close-modal')
+    const cancelBtn = document.getElementById('cancel-table')
+    const generateBtn = document.getElementById('generate-table-structure')
+    const insertBtn = document.getElementById('insert-table')
+    const tableEditor = document.getElementById('table-editor')
+    
+    let tableData = []
+    
+    function showModal() {
+        modal.style.display = 'flex'
+        generateTableStructure()
+    }
+    
+    function hideModal() {
+        modal.style.display = 'none'
+        tableEditor.innerHTML = ''
+    }
+    
+    function generateTableStructure() {
+        const rows = parseInt(document.getElementById('table-rows').value)
+        const cols = parseInt(document.getElementById('table-cols').value)
+        
+        tableData = Array(rows + 1).fill().map((_, rowIndex) => 
+            Array(cols).fill().map(() => rowIndex === 0 ? 'Header' : 'Cell')
+        )
+        
+        renderTableEditor()
+    }
+    
+    function renderTableEditor() {
+        const rows = tableData.length
+        const cols = tableData[0].length
+        
+        let html = '<table class="table-editor-table">'
+        
+        for (let i = 0; i < rows; i++) {
+            html += '<tr>'
+            for (let j = 0; j < cols; j++) {
+                const isHeader = i === 0
+                const cellClass = isHeader ? 'header-cell' : 'data-cell'
+                html += `<td class="${cellClass}">
+                    <input type="text" value="${tableData[i][j]}" 
+                           data-row="${i}" data-col="${j}" 
+                           placeholder="${isHeader ? 'Header' : 'Cell'}">
+                </td>`
+            }
+            html += '</tr>'
+        }
+        
+        html += '</table>'
+        tableEditor.innerHTML = html
+        
+        tableEditor.querySelectorAll('input').forEach(input => {
+            input.addEventListener('input', (e) => {
+                const row = parseInt(e.target.dataset.row)
+                const col = parseInt(e.target.dataset.col)
+                tableData[row][col] = e.target.value
+            })
+        })
+    }
+    
+    function generateMarkdownTable() {
+        if (tableData.length === 0) return ''
+        
+        let markdown = ''
+        
+        const headers = tableData[0]
+        markdown += '| ' + headers.join(' | ') + ' |\n'
+        markdown += '|' + headers.map(() => '----------|').join('') + '\n'
+        
+        for (let i = 1; i < tableData.length; i++) {
+            markdown += '| ' + tableData[i].join(' | ') + ' |\n'
+        }
+        
+        return markdown
+    }
+    
+    document.getElementById('table-btn').addEventListener('click', showModal)
+    closeBtn.addEventListener('click', hideModal)
+    cancelBtn.addEventListener('click', hideModal)
+    generateBtn.addEventListener('click', generateTableStructure)
+    
+    insertBtn.addEventListener('click', () => {
+        const tableMarkdown = generateMarkdownTable()
+        insertAtCursor('\n' + tableMarkdown + '\n')
+        hideModal()
+    })
+    
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) hideModal()
+    })
+}
+
+function initFormattingButtons() {
+    document.getElementById('bold-btn').addEventListener('click', () => wrapSelection('**'))
+    document.getElementById('italic-btn').addEventListener('click', () => wrapSelection('*'))
+    document.getElementById('underline-btn').addEventListener('click', () => wrapSelection('_'))
+    document.getElementById('code-btn').addEventListener('click', () => wrapSelection('`'))
+    
+    document.getElementById('h1-btn').addEventListener('click', () => insertHeading(1))
+    document.getElementById('h2-btn').addEventListener('click', () => insertHeading(2))
+    document.getElementById('h3-btn').addEventListener('click', () => insertHeading(3))
+    
+    document.getElementById('ul-btn').addEventListener('click', () => insertList(false))
+    document.getElementById('ol-btn').addEventListener('click', () => insertList(true))
+    
+    document.getElementById('link-btn').addEventListener('click', insertLink)
+    document.getElementById('image-btn').addEventListener('click', insertImage)
+    document.getElementById('codeblock-btn').addEventListener('click', insertCodeBlock)
+}
+
+function initHelpModal() {
+    const helpModal = document.getElementById('help-modal')
+    const helpBtn = document.getElementById('help-btn')
+    const closeHelpBtn = document.getElementById('close-help-modal')
+    
+    function showHelpModal() {
+        helpModal.style.display = 'flex'
+    }
+    
+    function hideHelpModal() {
+        helpModal.style.display = 'none'
+    }
+    
+    helpBtn.addEventListener('click', showHelpModal)
+    closeHelpBtn.addEventListener('click', hideHelpModal)
+    
+    helpModal.addEventListener('click', (e) => {
+        if (e.target === helpModal) hideHelpModal()
+    })
+    
+    // ESC key to close help modal
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && helpModal.style.display === 'flex') {
+            hideHelpModal()
+        }
+    })
+}
+
 function initEventListeners() {
     document.getElementById('save-btn').addEventListener('click', downloadFile)
     document.getElementById('copy-btn').addEventListener('click', copyToClipboard)
     document.getElementById('clear-btn').addEventListener('click', clearEditor)
     document.getElementById('theme-btn').addEventListener('click', toggleTheme)
+    
+    initFormattingButtons()
+    initTableModal()
+    initHelpModal()
 }
 
 async function init() {

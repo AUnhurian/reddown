@@ -11,6 +11,7 @@
         <header class="toolbar">
             <h1>Reddown</h1>
             <div class="toolbar-actions">
+                <button id="help-btn" title="Keyboard shortcuts">⌨️ Help</button>
                 <button id="save-btn" title="Save as .md file">💾 Save</button>
                 <button id="copy-btn" title="Copy to clipboard">📋 Copy</button>
                 <button id="clear-btn" title="Clear editor">🗑️ Clear</button>
@@ -23,6 +24,29 @@
                 <div class="panel-header">
                     <h3>Markdown Editor</h3>
                 </div>
+                <div class="formatting-toolbar">
+                    <div class="toolbar-group">
+                        <button id="bold-btn" title="Bold (Cmd+B)" class="format-btn">**B**</button>
+                        <button id="italic-btn" title="Italic (Cmd+I)" class="format-btn">*I*</button>
+                        <button id="underline-btn" title="Underline (Cmd+U)" class="format-btn">_U_</button>
+                        <button id="code-btn" title="Inline Code (Cmd+`)" class="format-btn">`C`</button>
+                    </div>
+                    <div class="toolbar-group">
+                        <button id="h1-btn" title="Heading 1 (Cmd+1)" class="format-btn">H1</button>
+                        <button id="h2-btn" title="Heading 2 (Cmd+2)" class="format-btn">H2</button>
+                        <button id="h3-btn" title="Heading 3 (Cmd+3)" class="format-btn">H3</button>
+                    </div>
+                    <div class="toolbar-group">
+                        <button id="ul-btn" title="Unordered List (Cmd+Shift+L)" class="format-btn">• List</button>
+                        <button id="ol-btn" title="Ordered List (Cmd+Shift+O)" class="format-btn">1. List</button>
+                    </div>
+                    <div class="toolbar-group">
+                        <button id="link-btn" title="Insert Link (Cmd+K)" class="format-btn">🔗 Link</button>
+                        <button id="image-btn" title="Insert Image (Cmd+Shift+I)" class="format-btn">🖼️ Image</button>
+                        <button id="table-btn" title="Insert Table (Cmd+Shift+T)" class="format-btn">📊 Table</button>
+                        <button id="codeblock-btn" title="Code Block (Cmd+Shift+C)" class="format-btn">``` Code</button>
+                    </div>
+                </div>
                 <div id="monaco-editor"></div>
             </div>
             
@@ -31,6 +55,85 @@
                     <h3>Live Preview</h3>
                 </div>
                 <div id="preview-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table Generator Modal -->
+    <div id="table-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create Table</h3>
+                <button id="close-modal" class="close-btn">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="table-controls">
+                    <label>
+                        Rows: <input type="number" id="table-rows" value="3" min="1" max="20">
+                    </label>
+                    <label>
+                        Columns: <input type="number" id="table-cols" value="3" min="1" max="10">
+                    </label>
+                    <button id="generate-table-structure">Generate Structure</button>
+                </div>
+                <div id="table-editor"></div>
+                <div class="modal-actions">
+                    <button id="insert-table" class="primary-btn">Insert Table</button>
+                    <button id="cancel-table" class="secondary-btn">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="help-modal" class="modal">
+        <div class="modal-content help-modal">
+            <div class="modal-header">
+                <h3>Keyboard Shortcuts</h3>
+                <button id="close-help-modal" class="close-btn">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="shortcuts-grid">
+                    <div class="shortcuts-section">
+                        <h4>Text Formatting</h4>
+                        <div class="shortcut"><kbd>Cmd+B</kbd> <span>Bold text</span></div>
+                        <div class="shortcut"><kbd>Cmd+I</kbd> <span>Italic text</span></div>
+                        <div class="shortcut"><kbd>Cmd+U</kbd> <span>Underline text</span></div>
+                        <div class="shortcut"><kbd>Cmd+`</kbd> <span>Inline code</span></div>
+                    </div>
+                    
+                    <div class="shortcuts-section">
+                        <h4>Headings</h4>
+                        <div class="shortcut"><kbd>Cmd+1</kbd> <span>Heading 1</span></div>
+                        <div class="shortcut"><kbd>Cmd+2</kbd> <span>Heading 2</span></div>
+                        <div class="shortcut"><kbd>Cmd+3</kbd> <span>Heading 3</span></div>
+                        <div class="shortcut"><kbd>Cmd+4</kbd> <span>Heading 4</span></div>
+                        <div class="shortcut"><kbd>Cmd+5</kbd> <span>Heading 5</span></div>
+                        <div class="shortcut"><kbd>Cmd+6</kbd> <span>Heading 6</span></div>
+                    </div>
+                    
+                    <div class="shortcuts-section">
+                        <h4>Lists</h4>
+                        <div class="shortcut"><kbd>Cmd+Shift+L</kbd> <span>Unordered list</span></div>
+                        <div class="shortcut"><kbd>Cmd+Shift+O</kbd> <span>Ordered list</span></div>
+                    </div>
+                    
+                    <div class="shortcuts-section">
+                        <h4>Insertions</h4>
+                        <div class="shortcut"><kbd>Cmd+K</kbd> <span>Insert link</span></div>
+                        <div class="shortcut"><kbd>Cmd+Shift+I</kbd> <span>Insert image</span></div>
+                        <div class="shortcut"><kbd>Cmd+Shift+C</kbd> <span>Code block</span></div>
+                        <div class="shortcut"><kbd>Cmd+Shift+T</kbd> <span>Insert table</span></div>
+                    </div>
+                    
+                    <div class="shortcuts-section">
+                        <h4>Editing</h4>
+                        <div class="shortcut"><kbd>Cmd+D</kbd> <span>Duplicate line</span></div>
+                        <div class="shortcut"><kbd>Cmd+Delete</kbd> <span>Delete line</span></div>
+                        <div class="shortcut"><kbd>Alt+↑</kbd> <span>Move line up</span></div>
+                        <div class="shortcut"><kbd>Alt+↓</kbd> <span>Move line down</span></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
