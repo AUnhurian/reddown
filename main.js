@@ -591,76 +591,63 @@ async function callOpenAI(content) {
     
     const isRedmineMode = getMarkdownMode()
     
-    const redminePrompt = `You are an expert markdown formatter specializing in Redmine markup. Your task is to improve the formatting and presentation of the provided markdown content while preserving all original meaning and information.
+    const redminePrompt = `You are a markdown formatter for Redmine syntax. Improve the text structure and formatting while keeping ALL links and images unchanged.
 
-IMPORTANT REDMINE-SPECIFIC RULES:
-- Use _text_ for underlined text (NOT for emphasis/italics)
-- Use *text* for italic text
-- Use **text** for bold text
+REDMINE SYNTAX:
+- _text_ for underline
+- *text* for italic  
+- **text** for bold
 
-Your improvements should focus on:
-1. Better structure and organization
-2. Improved readability with proper spacing
-3. Consistent formatting throughout
-4. Enhanced visual hierarchy with headings
-5. Better use of lists, tables, and code blocks where appropriate
-6. Adding appropriate line breaks and spacing
+IMPROVE ONLY:
+- Text organization and spacing
+- Heading structure
+- List formatting
+- Table alignment
+- Code block formatting
 
-PRESERVE EXACTLY (DO NOT MODIFY):
-- All original content and meaning
-- All technical information
-- All links and references (URLs, email addresses, etc.)
-- All code snippets
-- All image links and references
-- All file paths and external resources
+NEVER TOUCH:
+- Any text starting with http:// or https://
+- Any text containing ![
+- Any text containing ](
+- Any email addresses
+- Any file paths or URLs
 
-ENHANCE:
-- Visual structure and organization
-- Readability and clarity
-- Consistent markdown formatting
-- Proper use of Redmine syntax
+If you see links or images in the content, copy them exactly character-by-character. Do not reformat, fix, or modify them in any way.
 
-Here is the content to improve:
+Content to improve:
 
 ${content}
 
-Return ONLY the improved markdown content without any explanations or additional commentary.`
+Return only the formatted content.`
 
-    const standardPrompt = `You are an expert markdown formatter specializing in standard CommonMark syntax. Your task is to improve the formatting and presentation of the provided markdown content while preserving all original meaning and information.
+    const standardPrompt = `You are a markdown formatter for standard syntax. Improve the text structure and formatting while keeping ALL links and images unchanged.
 
-IMPORTANT STANDARD MARKDOWN RULES:
-- Use _text_ or *text* for italic text (emphasis)
-- Use **text** or __text__ for bold text (strong emphasis)
-- Use \`text\` for inline code
-- Follow CommonMark specification strictly
+STANDARD SYNTAX:
+- *text* or _text_ for italic
+- **text** or __text__ for bold
+- \`text\` for inline code
 
-Your improvements should focus on:
-1. Better structure and organization
-2. Improved readability with proper spacing
-3. Consistent formatting throughout
-4. Enhanced visual hierarchy with headings
-5. Better use of lists, tables, and code blocks where appropriate
-6. Adding appropriate line breaks and spacing
+IMPROVE ONLY:
+- Text organization and spacing
+- Heading structure
+- List formatting
+- Table alignment
+- Code block formatting
 
-PRESERVE EXACTLY (DO NOT MODIFY):
-- All original content and meaning
-- All technical information
-- All links and references (URLs, email addresses, etc.)
-- All code snippets
-- All image links and references
-- All file paths and external resources
+NEVER TOUCH:
+- Any text starting with http:// or https://
+- Any text containing ![
+- Any text containing ](
+- Any email addresses
+- Any file paths or URLs
 
-ENHANCE:
-- Visual structure and organization
-- Readability and clarity
-- Consistent standard markdown formatting
-- Proper use of CommonMark syntax
+If you see links or images in the content, copy them exactly character-by-character. Do not reformat, fix, or modify them in any way.
 
-Here is the content to improve:
+Content to improve:
 
 ${content}
 
-Return ONLY the improved markdown content without any explanations or additional commentary.`
+Return only the formatted content.`
 
     const prompt = isRedmineMode ? redminePrompt : standardPrompt
 
