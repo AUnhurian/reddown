@@ -113,7 +113,7 @@ function addEditorCommands() {
         wrapSelection('_')
     })
 
-    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Backquote, () => {
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyM, () => {
         wrapSelection('`')
     })
 
