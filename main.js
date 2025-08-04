@@ -606,11 +606,13 @@ Your improvements should focus on:
 5. Better use of lists, tables, and code blocks where appropriate
 6. Adding appropriate line breaks and spacing
 
-PRESERVE:
+PRESERVE EXACTLY (DO NOT MODIFY):
 - All original content and meaning
 - All technical information
-- All links and references
+- All links and references (URLs, email addresses, etc.)
 - All code snippets
+- All image links and references
+- All file paths and external resources
 
 ENHANCE:
 - Visual structure and organization
@@ -640,11 +642,13 @@ Your improvements should focus on:
 5. Better use of lists, tables, and code blocks where appropriate
 6. Adding appropriate line breaks and spacing
 
-PRESERVE:
+PRESERVE EXACTLY (DO NOT MODIFY):
 - All original content and meaning
 - All technical information
-- All links and references
+- All links and references (URLs, email addresses, etc.)
 - All code snippets
+- All image links and references
+- All file paths and external resources
 
 ENHANCE:
 - Visual structure and organization
