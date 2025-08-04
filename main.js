@@ -738,8 +738,7 @@ function initAIModal() {
         
         try {
             const enhancedContent = await callOpenAI(content)
-            editor.setValue(enhancedContent)
-            showNotification('Content enhanced successfully!')
+            showDiffModal(content, enhancedContent)
             hideAiModal()
         } catch (error) {
             console.error('AI Enhancement error:', error)
@@ -800,6 +799,245 @@ function initHelpModal() {
     })
 }
 
+function lcs(a, b) {
+    const m = a.length
+    const n = b.length
+    const dp = Array(m + 1).fill().map(() => Array(n + 1).fill(0))
+    
+    for (let i = 1; i <= m; i++) {
+        for (let j = 1; j <= n; j++) {
+            if (a[i - 1] === b[j - 1]) {
+                dp[i][j] = dp[i - 1][j - 1] + 1
+            } else {
+                dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1])
+            }
+        }
+    }
+    
+    return dp
+}
+
+function createLineDiff(originalContent, enhancedContent) {
+    const originalLines = originalContent.split('\n')
+    const enhancedLines = enhancedContent.split('\n')
+    
+    // Use LCS (Longest Common Subsequence) for better diff
+    const dp = lcs(originalLines, enhancedLines)
+    const originalDiff = []
+    const enhancedDiff = []
+    
+    let i = originalLines.length
+    let j = enhancedLines.length
+    
+    // Backtrack to find the diff
+    const operations = []
+    
+    while (i > 0 || j > 0) {
+        if (i > 0 && j > 0 && originalLines[i - 1] === enhancedLines[j - 1]) {
+            operations.unshift({ type: 'unchanged', original: i - 1, enhanced: j - 1 })
+            i--
+            j--
+        } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+            operations.unshift({ type: 'added', enhanced: j - 1 })
+            j--
+        } else if (i > 0) {
+            operations.unshift({ type: 'removed', original: i - 1 })
+            i--
+        }
+    }
+    
+    // Convert operations to diff format
+    for (const op of operations) {
+        if (op.type === 'unchanged') {
+            originalDiff.push({ 
+                type: 'unchanged', 
+                content: originalLines[op.original], 
+                lineNum: op.original + 1 
+            })
+            enhancedDiff.push({ 
+                type: 'unchanged', 
+                content: enhancedLines[op.enhanced], 
+                lineNum: op.enhanced + 1 
+            })
+        } else if (op.type === 'added') {
+            originalDiff.push({ type: 'empty', content: '', lineNum: null })
+            enhancedDiff.push({ 
+                type: 'added', 
+                content: enhancedLines[op.enhanced], 
+                lineNum: op.enhanced + 1 
+            })
+        } else if (op.type === 'removed') {
+            originalDiff.push({ 
+                type: 'removed', 
+                content: originalLines[op.original], 
+                lineNum: op.original + 1 
+            })
+            enhancedDiff.push({ type: 'empty', content: '', lineNum: null })
+        }
+    }
+    
+    return { originalDiff, enhancedDiff }
+}
+
+function renderDiffContent(diffLines) {
+    return diffLines.map(line => {
+        const lineNumStr = line.lineNum ? String(line.lineNum).padStart(3, ' ') : '   '
+        const content = line.content || ''
+        
+        return `<div class="diff-line diff-line-${line.type}">
+            <span class="diff-line-number">${lineNumStr}</span>
+            <span class="diff-line-content">${escapeHtml(content)}</span>
+        </div>`
+    }).join('')
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div')
+    div.textContent = text
+    return div.innerHTML
+}
+
+function showDiffModal(originalContent, enhancedContent) {
+    const diffModal = document.getElementById('ai-diff-modal')
+    const originalDiv = document.getElementById('original-content')
+    const enhancedDiv = document.getElementById('enhanced-content')
+    const summarySpan = document.getElementById('diff-summary')
+    
+    // Create line-by-line diff
+    const { originalDiff, enhancedDiff } = createLineDiff(originalContent, enhancedContent)
+    
+    // Render diff content
+    originalDiv.innerHTML = renderDiffContent(originalDiff)
+    enhancedDiv.innerHTML = renderDiffContent(enhancedDiff)
+    
+    // Calculate stats
+    const originalLines = originalContent.split('\n').length
+    const enhancedLines = enhancedContent.split('\n').length
+    const originalChars = originalContent.length
+    const enhancedChars = enhancedContent.length
+    const originalWords = originalContent.split(/\s+/).filter(w => w.length > 0).length
+    const enhancedWords = enhancedContent.split(/\s+/).filter(w => w.length > 0).length
+    
+    // Count changes
+    const addedLines = enhancedDiff.filter(line => line.type === 'added').length
+    const removedLines = originalDiff.filter(line => line.type === 'removed').length
+    const changedLines = addedLines + removedLines
+    
+    function getChangeClass(diff) {
+        if (diff > 0) return 'positive'
+        if (diff < 0) return 'negative'
+        return 'neutral'
+    }
+    
+    function formatDiff(diff) {
+        if (diff === 0) return '±0'
+        return diff > 0 ? `+${diff}` : `${diff}`
+    }
+    
+    summarySpan.innerHTML = `
+        <div class="diff-stats-item">
+            <span class="diff-stats-label">Changes</span>
+            <span class="diff-stats-value">${changedLines} lines</span>
+            <span class="diff-stats-change ${changedLines > 0 ? 'positive' : 'neutral'}">+${addedLines} -${removedLines}</span>
+        </div>
+        <div class="diff-stats-item">
+            <span class="diff-stats-label">Words</span>
+            <span class="diff-stats-value">${originalWords} → ${enhancedWords}</span>
+            <span class="diff-stats-change ${getChangeClass(enhancedWords - originalWords)}">${formatDiff(enhancedWords - originalWords)}</span>
+        </div>
+        <div class="diff-stats-item">
+            <span class="diff-stats-label">Characters</span>
+            <span class="diff-stats-value">${originalChars} → ${enhancedChars}</span>
+            <span class="diff-stats-change ${getChangeClass(enhancedChars - originalChars)}">${formatDiff(enhancedChars - originalChars)}</span>
+        </div>
+    `
+    
+    // Store enhanced content for later use
+    diffModal.setAttribute('data-enhanced-content', enhancedContent)
+    
+    diffModal.style.display = 'flex'
+    
+    // Setup sync scroll after modal is displayed
+    setTimeout(() => {
+        if (window.setupDiffSyncScroll) {
+            window.setupDiffSyncScroll()
+        }
+    }, 150)
+}
+
+function initDiffModal() {
+    const diffModal = document.getElementById('ai-diff-modal')
+    const closeDiffBtn = document.getElementById('close-diff-modal')
+    const applyBtn = document.getElementById('apply-changes')
+    const rejectBtn = document.getElementById('reject-changes')
+    
+    function hideDiffModal() {
+        diffModal.style.display = 'none'
+        diffModal.removeAttribute('data-enhanced-content')
+    }
+    
+    function applyChanges() {
+        const enhancedContent = diffModal.getAttribute('data-enhanced-content')
+        if (enhancedContent) {
+            editor.setValue(enhancedContent)
+            showNotification('Changes applied successfully!')
+        }
+        hideDiffModal()
+    }
+    
+    function rejectChanges() {
+        showNotification('Changes rejected')
+        hideDiffModal()
+    }
+    
+    // Synchronized scrolling
+    function setupSyncScroll() {
+        const originalDiv = document.getElementById('original-content')
+        const enhancedDiv = document.getElementById('enhanced-content')
+        
+        if (!originalDiv || !enhancedDiv) return
+        
+        // Remove existing listeners to avoid duplicates
+        originalDiv.removeEventListener('scroll', originalDiv._syncScrollHandler)
+        enhancedDiv.removeEventListener('scroll', enhancedDiv._syncScrollHandler)
+        
+        let isScrolling = false
+        
+        function syncScroll(source, target) {
+            if (isScrolling) return
+            isScrolling = true
+            target.scrollTop = source.scrollTop
+            setTimeout(() => { isScrolling = false }, 16) // One frame delay
+        }
+        
+        // Store handlers for removal later
+        originalDiv._syncScrollHandler = () => syncScroll(originalDiv, enhancedDiv)
+        enhancedDiv._syncScrollHandler = () => syncScroll(enhancedDiv, originalDiv)
+        
+        originalDiv.addEventListener('scroll', originalDiv._syncScrollHandler, { passive: true })
+        enhancedDiv.addEventListener('scroll', enhancedDiv._syncScrollHandler, { passive: true })
+    }
+    
+    closeDiffBtn.addEventListener('click', hideDiffModal)
+    applyBtn.addEventListener('click', applyChanges)
+    rejectBtn.addEventListener('click', rejectChanges)
+    
+    diffModal.addEventListener('click', (e) => {
+        if (e.target === diffModal) hideDiffModal()
+    })
+    
+    // Store the sync scroll setup function
+    diffModal.setAttribute('data-sync-setup', 'true')
+    window.setupDiffSyncScroll = setupSyncScroll
+    
+    // ESC key to close
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && diffModal.style.display === 'flex') {
+            hideDiffModal()
+        }
+    })
+}
+
 function initEventListeners() {
     document.getElementById('save-btn').addEventListener('click', downloadFile)
     document.getElementById('copy-btn').addEventListener('click', copyToClipboard)
@@ -810,6 +1048,7 @@ function initEventListeners() {
     initTableModal()
     initAIModal()
     initHelpModal()
+    initDiffModal()
 }
 
 async function init() {

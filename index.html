@@ -258,6 +258,35 @@
         </div>
     </div>
 
+    <!-- AI Diff Modal -->
+    <div id="ai-diff-modal" class="modal">
+        <div class="modal-content diff-modal">
+            <div class="modal-header">
+                <h3>AI Enhancement Preview</h3>
+                <button id="close-diff-modal" class="close-btn">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="diff-container">
+                    <div class="diff-panel">
+                        <h4>Original Content</h4>
+                        <div id="original-content" class="diff-content"></div>
+                    </div>
+                    <div class="diff-panel">
+                        <h4>Enhanced Content</h4>
+                        <div id="enhanced-content" class="diff-content"></div>
+                    </div>
+                </div>
+                <div class="diff-stats">
+                    <span id="diff-summary"></span>
+                </div>
+                <div class="modal-actions">
+                    <button id="apply-changes" class="primary-btn">✅ Apply Changes</button>
+                    <button id="reject-changes" class="secondary-btn">❌ Reject Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script type="module" src="main.js"></script>
 </body>
 </html>
