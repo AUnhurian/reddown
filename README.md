@@ -21,7 +21,7 @@
 - **Smart Mode Detection** with visual toggle
 
 ### 🎨 **Rich Formatting Toolbar**
-- Text formatting: **Bold**, *Italic*, _Underline_, `Code`
+- Text formatting: **Bold**, *Italic*, _Underline_, ~~Strikethrough~~, `Code`
 - Headings: H1-H6
 - Lists: Ordered & Unordered
 - Insert: Links, Images, Tables, Code blocks
@@ -94,7 +94,8 @@ Your API key is stored securely in your browser and never sent to our servers.
 - `Cmd+B` - **Bold**
 - `Cmd+I` - *Italic*
 - `Cmd+U` - _Underline_
-- `Cmd+\`` - `Code`
+- `Cmd+H` - ~~Strikethrough~~
+- `Cmd+M` - `Code`
 
 ### Headings
 - `Cmd+1` to `Cmd+6` - H1 to H6

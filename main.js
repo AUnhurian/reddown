@@ -117,6 +117,10 @@ function addEditorCommands() {
         wrapSelection('`')
     })
 
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyH, () => {
+        wrapSelection('~~')
+    })
+
     // Heading shortcuts
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Digit1, () => {
         insertHeading(1)
@@ -569,6 +573,7 @@ function initFormattingButtons() {
     document.getElementById('bold-btn').addEventListener('click', () => wrapSelection('**'))
     document.getElementById('italic-btn').addEventListener('click', () => wrapSelection('*'))
     document.getElementById('underline-btn').addEventListener('click', () => wrapSelection('_'))
+    document.getElementById('strikethrough-btn').addEventListener('click', () => wrapSelection('~~'))
     document.getElementById('code-btn').addEventListener('click', () => wrapSelection('`'))
     
     document.getElementById('h1-btn').addEventListener('click', () => insertHeading(1))
