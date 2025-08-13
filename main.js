@@ -498,8 +498,21 @@ function initTableModal() {
         const rows = parseInt(document.getElementById('table-rows').value)
         const cols = parseInt(document.getElementById('table-cols').value)
         
+        // Preserve existing data when regenerating
+        const oldTableData = tableData
+        const oldRows = oldTableData.length
+        const oldCols = oldTableData.length > 0 ? oldTableData[0].length : 0
+        
+        // Create new structure
         tableData = Array(rows + 1).fill().map((_, rowIndex) => 
-            Array(cols).fill().map(() => rowIndex === 0 ? 'Header' : 'Cell')
+            Array(cols).fill().map((_, colIndex) => {
+                // Preserve existing data if it exists
+                if (rowIndex < oldRows && colIndex < oldCols && oldTableData[rowIndex] && oldTableData[rowIndex][colIndex]) {
+                    return oldTableData[rowIndex][colIndex]
+                }
+                // Use default values for new cells
+                return rowIndex === 0 ? 'Header' : 'Cell'
+            })
         )
         
         renderTableEditor()
@@ -528,13 +541,189 @@ function initTableModal() {
         html += '</table>'
         tableEditor.innerHTML = html
         
+        // Remove existing event listeners to prevent duplicates
         tableEditor.querySelectorAll('input').forEach(input => {
+            // Clone node to remove all event listeners
+            const newInput = input.cloneNode(true)
+            input.parentNode.replaceChild(newInput, input)
+        })
+        
+        // Add fresh event listeners
+        tableEditor.querySelectorAll('input').forEach(input => {
+            // Save data on input
             input.addEventListener('input', (e) => {
                 const row = parseInt(e.target.dataset.row)
                 const col = parseInt(e.target.dataset.col)
                 tableData[row][col] = e.target.value
             })
+            
+            // Handle keyboard navigation
+            input.addEventListener('keydown', (e) => {
+                const inputs = Array.from(tableEditor.querySelectorAll('input'))
+                const currentIndex = inputs.indexOf(e.target)
+                
+                switch (e.key) {
+                    case 'Enter':
+                        if (e.ctrlKey || e.metaKey) {
+                            e.preventDefault()
+                            insertBtn.click()
+                            return
+                        }
+                        // Fall through to Tab behavior for regular Enter
+                    case 'Tab':
+                        e.preventDefault()
+                        if (e.shiftKey) {
+                            const prevIndex = (currentIndex - 1 + inputs.length) % inputs.length
+                            inputs[prevIndex].focus()
+                            inputs[prevIndex].select()
+                        } else {
+                            const nextIndex = (currentIndex + 1) % inputs.length
+                            inputs[nextIndex].focus()
+                            inputs[nextIndex].select()
+                        }
+                        break
+                        
+                    case 'Escape':
+                        e.preventDefault()
+                        hideModal()
+                        break
+                        
+                    // Text formatting shortcuts
+                    case 'b':
+                        if (e.ctrlKey || e.metaKey) {
+                            e.preventDefault()
+                            formatTextInCell(e.target, '**')
+                        }
+                        break
+                        
+                    case 'i':
+                        if (e.ctrlKey || e.metaKey) {
+                            e.preventDefault()
+                            formatTextInCell(e.target, '*')
+                        }
+                        break
+                        
+                    case 'u':
+                        if (e.ctrlKey || e.metaKey) {
+                            e.preventDefault()
+                            formatTextInCell(e.target, '_')
+                        }
+                        break
+                        
+                    case 'm':
+                        if (e.ctrlKey || e.metaKey) {
+                            e.preventDefault()
+                            formatTextInCell(e.target, '`')
+                        }
+                        break
+                        
+                    case 'h':
+                        if (e.ctrlKey || e.metaKey) {
+                            e.preventDefault()
+                            formatTextInCell(e.target, '~~')
+                        }
+                        break
+                        
+                    case 'ArrowRight':
+                        if (e.target.selectionStart === e.target.value.length) {
+                            e.preventDefault()
+                            const nextIndex = (currentIndex + 1) % inputs.length
+                            inputs[nextIndex].focus()
+                        }
+                        break
+                        
+                    case 'ArrowLeft':
+                        if (e.target.selectionStart === 0) {
+                            e.preventDefault()
+                            const prevIndex = (currentIndex - 1 + inputs.length) % inputs.length
+                            inputs[prevIndex].focus()
+                        }
+                        break
+                        
+                    case 'ArrowDown':
+                        e.preventDefault()
+                        const currentRow = parseInt(e.target.dataset.row)
+                        const currentCol = parseInt(e.target.dataset.col)
+                        const downInput = inputs.find(inp => 
+                            parseInt(inp.dataset.row) === currentRow + 1 && 
+                            parseInt(inp.dataset.col) === currentCol
+                        )
+                        if (downInput) {
+                            downInput.focus()
+                            downInput.select()
+                        }
+                        break
+                        
+                    case 'ArrowUp':
+                        e.preventDefault()
+                        const upRow = parseInt(e.target.dataset.row)
+                        const upCol = parseInt(e.target.dataset.col)
+                        const upInput = inputs.find(inp => 
+                            parseInt(inp.dataset.row) === upRow - 1 && 
+                            parseInt(inp.dataset.col) === upCol
+                        )
+                        if (upInput) {
+                            upInput.focus()
+                            upInput.select()
+                        }
+                        break
+                }
+            })
         })
+        
+        // Focus first input after rendering
+        const firstInput = tableEditor.querySelector('input')
+        if (firstInput) {
+            setTimeout(() => firstInput.focus(), 100)
+        }
+    }
+    
+    function formatTextInCell(input, wrapper) {
+        const start = input.selectionStart
+        const end = input.selectionEnd
+        const selectedText = input.value.substring(start, end)
+        
+        if (selectedText) {
+            // Format selected text
+            const formattedText = wrapper + selectedText + wrapper
+            const newValue = input.value.substring(0, start) + formattedText + input.value.substring(end)
+            input.value = newValue
+            
+            // Update tableData
+            const row = parseInt(input.dataset.row)
+            const col = parseInt(input.dataset.col)
+            tableData[row][col] = newValue
+            
+            // Set cursor position after formatting
+            const newStart = start + wrapper.length
+            const newEnd = newStart + selectedText.length
+            setTimeout(() => {
+                input.focus()
+                input.setSelectionRange(newStart, newEnd)
+            }, 0)
+        } else {
+            // No selection - insert wrapper with placeholder
+            const placeholder = 'text'
+            const formattedText = wrapper + placeholder + wrapper
+            const newValue = input.value.substring(0, start) + formattedText + input.value.substring(start)
+            input.value = newValue
+            
+            // Update tableData
+            const row = parseInt(input.dataset.row)
+            const col = parseInt(input.dataset.col)
+            tableData[row][col] = newValue
+            
+            // Select the placeholder text
+            const newStart = start + wrapper.length
+            const newEnd = newStart + placeholder.length
+            setTimeout(() => {
+                input.focus()
+                input.setSelectionRange(newStart, newEnd)
+            }, 0)
+        }
+        
+        // Trigger input event to save changes
+        input.dispatchEvent(new Event('input'))
     }
     
     function generateMarkdownTable() {
