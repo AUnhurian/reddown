@@ -87,9 +87,139 @@ body.dark-theme {
 .editor-panel,
 .preview-panel {
     flex: 1;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     overflow: hidden;
+}
+
+.drafts-panel {
+    width: 240px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background-color: #f8f8f8;
+    border-right: 1px solid #e0e0e0;
+}
+
+.dark-theme .drafts-panel {
+    background-color: #252526;
+    border-right-color: #3e3e42;
+}
+
+.drafts-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.draft-action {
+    padding: 4px 8px;
+    border: 1px solid #d0d0d0;
+    border-radius: 4px;
+    background-color: #ffffff;
+    color: #333333;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.draft-action:hover {
+    background-color: #f0f0f0;
+}
+
+.dark-theme .draft-action {
+    background-color: #3c3c3c;
+    border-color: #5c5c5c;
+    color: #cccccc;
+}
+
+.dark-theme .draft-action:hover {
+    background-color: #4c4c4c;
+}
+
+.draft-list {
+    list-style: none;
+    overflow-y: auto;
+    flex: 1;
+    padding: 6px;
+}
+
+.draft-item {
+    display: flex;
+    align-items: center;
+    border-radius: 4px;
+    margin-bottom: 2px;
+}
+
+.draft-item:hover {
+    background-color: #eeeeee;
+}
+
+.dark-theme .draft-item:hover {
+    background-color: #2d2d30;
+}
+
+.draft-item.active {
+    background-color: #e7f1fb;
+}
+
+.dark-theme .draft-item.active {
+    background-color: #094771;
+}
+
+.draft-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: left;
+    background: transparent;
+    border: none;
+    color: inherit;
+    font: inherit;
+    font-size: 13px;
+    padding: 8px;
+    cursor: pointer;
+}
+
+.draft-item.active .draft-name {
+    font-weight: 600;
+}
+
+.draft-delete {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: transparent;
+    color: #888888;
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 4px;
+}
+
+.draft-delete:hover {
+    color: #ffffff;
+    background-color: #e74c3c;
+}
+
+.draft-rename {
+    flex: 1;
+    min-width: 0;
+    margin: 4px;
+    padding: 4px 6px;
+    font-size: 13px;
+    border: 1px solid #0066cc;
+    border-radius: 3px;
+    background-color: #ffffff;
+    color: #333333;
+}
+
+.dark-theme .draft-rename {
+    background-color: #3c3c3c;
+    color: #cccccc;
+    border-color: #4a9eff;
 }
 
 .editor-panel {
@@ -181,6 +311,7 @@ body.dark-theme {
 .toggle-label {
     display: flex;
     align-items: center;
+    gap: 6px;
     font-size: 12px;
     font-weight: 500;
 }
@@ -212,11 +343,46 @@ body.dark-theme {
     color: #4a9eff;
 }
 
+.panel-heading {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.drafts-panel.is-collapsed {
+    display: none;
+}
+
+.pane-resizer {
+    width: 6px;
+    flex-shrink: 0;
+    cursor: col-resize;
+    position: relative;
+    background-color: #e0e0e0;
+}
+
+.dark-theme .pane-resizer {
+    background-color: #3e3e42;
+}
+
+.pane-resizer:hover,
+.pane-resizer.is-dragging {
+    background-color: #0066cc;
+}
+
+body.is-resizing {
+    cursor: col-resize;
+    user-select: none;
+}
+
 .formatting-toolbar {
     display: flex;
     flex-wrap: wrap;
+    flex-shrink: 0;
     gap: 8px;
     padding: 8px 12px;
+    overflow: visible;
     background-color: #2d2d30;
     border-bottom: 1px solid #3e3e42;
     border-top: 1px solid #3e3e42;
@@ -230,6 +396,7 @@ body:not(.dark-theme) .formatting-toolbar {
 
 .toolbar-group {
     display: flex;
+    flex-wrap: wrap;
     gap: 4px;
     align-items: center;
 }
@@ -308,6 +475,11 @@ body:not(.dark-theme) .format-btn:active {
     overflow: hidden;
     display: flex;
     flex-direction: column;
+}
+
+.ai-modal {
+    max-width: 720px;
+    max-height: 90vh;
 }
 
 body:not(.dark-theme) .modal-content {
@@ -496,6 +668,12 @@ body:not(.dark-theme) .secondary-btn {
     color: #333333;
 }
 
+.secondary-btn.small-btn,
+.primary-btn.small-btn {
+    padding: 4px 10px;
+    font-size: 12px;
+}
+
 .secondary-btn:hover {
     background-color: #3c3c3c;
 }
@@ -652,6 +830,104 @@ body:not(.dark-theme) .shortcut span {
 .ai-features li {
     margin-bottom: 6px;
     font-size: 13px;
+}
+
+.setting-group select,
+.setting-group textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d0d0d0;
+    border-radius: 4px;
+    background-color: #ffffff;
+    color: #333333;
+    font-size: 14px;
+}
+
+.setting-group select {
+    margin-bottom: 4px;
+}
+
+.setting-group textarea {
+    font-family: inherit;
+    line-height: 1.45;
+    resize: vertical;
+    min-height: 120px;
+}
+
+.dark-theme .setting-group select,
+.dark-theme .setting-group textarea {
+    background-color: #3c3c3c;
+    border-color: #5c5c5c;
+    color: #cccccc;
+}
+
+.setting-group select:focus,
+.setting-group textarea:focus {
+    outline: none;
+    border-color: #0066cc;
+    box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.2);
+}
+
+.skill-hint,
+.skill-empty {
+    color: #666666;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.skill-hint {
+    margin: 0 0 10px;
+}
+
+.skill-empty {
+    margin: 8px 0;
+}
+
+.dark-theme .skill-hint,
+.dark-theme .skill-empty {
+    color: #aaaaaa;
+}
+
+.skill-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 12px 0;
+}
+
+.skill-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.skill-row-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+}
+
+.skill-editor {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #e0e0e0;
+}
+
+.dark-theme .skill-editor {
+    border-top-color: #3e3e42;
+}
+
+.skill-editor label {
+    margin-top: 12px;
+}
+
+.skill-editor-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
 }
 
 #ai-btn {
@@ -1155,10 +1431,31 @@ body:not(.dark-theme) .diff-stats {
     .editor-container {
         flex-direction: column;
     }
+
+    .drafts-panel {
+        width: 100%;
+        max-height: 180px;
+        border-right: none;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    .dark-theme .drafts-panel {
+        border-bottom: 1px solid #3e3e42;
+    }
     
+    .pane-resizer {
+        width: 100%;
+        height: 6px;
+        cursor: row-resize;
+    }
+
+    body.is-resizing {
+        cursor: row-resize;
+    }
+
     .editor-panel {
         border-right: none;
-        border-bottom: 1px solid #3e3e42;
+        border-bottom: none;
     }
     
     body:not(.dark-theme) .editor-panel {

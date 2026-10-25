@@ -92,9 +92,24 @@
         </header>
 
         <div class="editor-container">
+            <aside id="drafts-panel" class="drafts-panel">
+                <div class="panel-header">
+                    <h3>Drafts</h3>
+                    <div class="drafts-actions">
+                        <button type="button" id="new-draft-btn" class="draft-action" title="New draft">New</button>
+                        <button type="button" id="open-draft-btn" class="draft-action" title="Open a Markdown file">Open</button>
+                        <button type="button" id="hide-drafts-btn" class="draft-action" title="Hide drafts">‹</button>
+                    </div>
+                </div>
+                <ul id="draft-list" class="draft-list"></ul>
+                <input type="file" id="open-draft-file" accept=".md,.markdown,.txt,text/markdown,text/plain" hidden>
+            </aside>
             <div class="editor-panel">
                 <div class="panel-header">
-                    <h3>Markdown Editor</h3>
+                    <div class="panel-heading">
+                        <button type="button" id="show-drafts-btn" class="draft-action" title="Show drafts" hidden>Drafts</button>
+                        <h3>Markdown Editor</h3>
+                    </div>
                     <div class="mode-toggle">
                         <label class="toggle-switch">
                             <input type="checkbox" id="markdown-mode" checked>
@@ -122,16 +137,21 @@
                     <div class="toolbar-group">
                         <button id="ul-btn" title="Unordered List (Cmd+Shift+L)" class="format-btn">• List</button>
                         <button id="ol-btn" title="Ordered List (Cmd+Shift+O)" class="format-btn">1. List</button>
+                        <button id="task-btn" title="Task" class="format-btn">☐ Task</button>
+                        <button id="quote-btn" title="Quote" class="format-btn">&gt; Quote</button>
                     </div>
                     <div class="toolbar-group">
                         <button id="link-btn" title="Insert Link (Cmd+K)" class="format-btn">🔗 Link</button>
                         <button id="image-btn" title="Insert Image (Cmd+Shift+I)" class="format-btn">🖼️ Image</button>
                         <button id="table-btn" title="Insert Table (Cmd+Shift+T)" class="format-btn">📊 Table</button>
                         <button id="codeblock-btn" title="Code Block (Cmd+Shift+C)" class="format-btn">``` Code</button>
+                        <button id="rule-btn" title="Horizontal rule" class="format-btn">—</button>
                     </div>
                 </div>
                 <div id="monaco-editor"></div>
             </div>
+
+            <div id="pane-resizer" class="pane-resizer" role="separator" aria-orientation="vertical" title="Drag to resize"></div>
 
             <div class="preview-panel">
                 <div class="panel-header">
@@ -170,7 +190,7 @@
 
     <!-- AI Settings Modal -->
     <div id="ai-modal" class="modal">
-        <div class="modal-content">
+            <div class="modal-content ai-modal">
             <div class="modal-header">
                 <h3>AI Enhancement Settings</h3>
                 <button id="close-ai-modal" class="close-btn">×</button>
@@ -185,15 +205,39 @@
                     </div>
 
                     <div class="setting-group">
-                        <h4>What AI Enhancement Does:</h4>
-                        <ul class="ai-features">
-                            <li>Improves markdown formatting and structure</li>
-                            <li>Maintains all original content and meaning</li>
-                            <li>Preserves all links, images, and file references</li>
-                            <li>Applies mode-specific syntax (Redmine or Standard)</li>
-                            <li>Enhances readability with better organization</li>
-                            <li>Adds proper spacing and formatting</li>
-                        </ul>
+                        <label for="openai-model">Model</label>
+                        <select id="openai-model">
+                            <option value="o4-mini">o4-mini</option>
+                            <option value="gpt-5-mini">gpt-5-mini</option>
+                            <option value="gpt-4.1-mini">gpt-4.1-mini</option>
+                            <option value="gpt-4o-mini">gpt-4o-mini</option>
+                            <option value="o3-mini">o3-mini</option>
+                            <option value="custom">Other</option>
+                        </select>
+                        <input type="text" id="openai-model-custom" placeholder="model id" autocomplete="off" hidden>
+                        <small>Used for every AI run. Default is o4-mini.</small>
+                    </div>
+
+                    <div class="setting-group">
+                        <h4>Skill</h4>
+                        <p class="skill-hint">A skill is the instruction for how the result must come back. Save it once, then pick it whenever you run AI. Default enhance stays available.</p>
+                        <label for="ai-skill-select">Use</label>
+                        <select id="ai-skill-select">
+                            <option value="">Default enhance</option>
+                        </select>
+                        <div id="skill-list" class="skill-list"></div>
+                        <button type="button" id="new-skill-btn" class="secondary-btn small-btn">New skill</button>
+                        <div id="skill-editor" class="skill-editor" hidden>
+                            <label for="skill-name">Name</label>
+                            <input type="text" id="skill-name" maxlength="80" autocomplete="off" placeholder="Bug report">
+                            <label for="skill-instruction">Instruction</label>
+                            <textarea id="skill-instruction" placeholder="Return only markdown in this structure:&#10;## Summary&#10;## Steps&#10;## Acceptance criteria&#10;Keep the original facts. Do not invent anything."></textarea>
+                            <small>Write it as a contract: the structure, the tone, and what must stay unchanged. The model receives this text as-is.</small>
+                            <div class="skill-editor-actions">
+                                <button type="button" id="save-skill-btn" class="primary-btn small-btn">Save skill</button>
+                                <button type="button" id="cancel-skill-btn" class="secondary-btn small-btn">Cancel</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -201,6 +245,17 @@
                     <button id="save-ai-settings" class="primary-btn">Save Settings</button>
                     <button id="enhance-now" class="secondary-btn" disabled>🤖 Enhance Current Content</button>
                     <button id="cancel-ai-settings" class="secondary-btn">Cancel</button>
+                </div>
+
+                <div class="setting-group">
+                    <h4>What AI Enhancement Does:</h4>
+                    <ul class="ai-features">
+                        <li>Runs the selected skill, or the default enhance when no skill is selected</li>
+                        <li>Improves markdown formatting and structure</li>
+                        <li>Maintains all original content and meaning</li>
+                        <li>Preserves all links, images, and file references</li>
+                        <li>Applies mode-specific syntax (Redmine or Standard)</li>
+                    </ul>
                 </div>
             </div>
         </div>

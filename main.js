@@ -5,13 +5,28 @@ let editor
 let markdownProcessor
 const STORAGE_KEY = 'reddown-content'
 const AI_KEY_STORAGE = 'reddown-openai-key'
+const AI_MODEL_STORAGE = 'reddown-openai-model'
+const DEFAULT_MODEL = 'o4-mini'
+const KNOWN_MODELS = ['o4-mini', 'gpt-5-mini', 'gpt-4.1-mini', 'gpt-4o-mini', 'o3-mini']
+const DRAFTS_KEY = 'reddown-drafts'
+const ACTIVE_DRAFT_KEY = 'reddown-active-draft'
+const SKILLS_KEY = 'reddown-ai-skills'
+const ACTIVE_SKILL_KEY = 'reddown-active-skill'
+const DRAFTS_HIDDEN_KEY = 'reddown-drafts-hidden'
+const SPLIT_KEY = 'reddown-split'
+
+let drafts = []
+let activeDraftId = null
+let skills = []
+let skipDraftSave = false
+let storageWarningShown = false
 
 function initEditor() {
     const savedTheme = localStorage.getItem('reddown-theme') || 'vs'
     const isRedmineMode = getMarkdownMode()
     
     editor = monaco.editor.create(document.getElementById('monaco-editor'), {
-        value: getStoredContent(),
+        value: getActiveDraft().content,
         language: 'markdown',
         theme: savedTheme,
         automaticLayout: true,
@@ -47,7 +62,9 @@ function initEditor() {
     editor.onDidChangeModelContent(() => {
         const content = editor.getValue()
         updatePreview(content)
-        saveToStorage(content)
+        if (!skipDraftSave) {
+            saveActiveDraftContent(content)
+        }
     })
 
     addEditorCommands()
@@ -182,7 +199,7 @@ function updatePreview(content) {
     document.getElementById('preview-content').innerHTML = html
 }
 
-function getStoredContent() {
+function createInitialContent() {
     const isRedmineMode = getMarkdownMode()
     
     const redmineContent = `# Welcome to Reddown
@@ -271,11 +288,251 @@ function hello() {
 
 Try switching to Redmine mode using the toggle above!`
     
-    return localStorage.getItem(STORAGE_KEY) || (isRedmineMode ? redmineContent : standardContent)
+    return isRedmineMode ? redmineContent : standardContent
 }
 
-function saveToStorage(content) {
-    localStorage.setItem(STORAGE_KEY, content)
+function createId() {
+    return crypto.randomUUID()
+}
+
+function readJson(key, fallback) {
+    try {
+        const raw = localStorage.getItem(key)
+        if (!raw) return fallback
+        return JSON.parse(raw)
+    } catch {
+        return fallback
+    }
+}
+
+function loadDraftState() {
+    const stored = readJson(DRAFTS_KEY, null)
+    if (Array.isArray(stored) && stored.length > 0) {
+        drafts = stored.filter(draft => draft && draft.id).map(draft => ({
+            id: draft.id,
+            name: typeof draft.name === 'string' && draft.name.trim() ? draft.name : 'Untitled',
+            content: typeof draft.content === 'string' ? draft.content : '',
+            updatedAt: draft.updatedAt || Date.now()
+        }))
+        if (drafts.length > 0) {
+            const savedId = localStorage.getItem(ACTIVE_DRAFT_KEY)
+            activeDraftId = drafts.some(draft => draft.id === savedId) ? savedId : drafts[0].id
+            return
+        }
+    }
+
+    const legacy = localStorage.getItem(STORAGE_KEY)
+    const draft = {
+        id: createId(),
+        name: legacy !== null ? 'Untitled' : 'Welcome',
+        content: legacy !== null ? legacy : createInitialContent(),
+        updatedAt: Date.now()
+    }
+    drafts = [draft]
+    activeDraftId = draft.id
+    persistDrafts()
+    if (legacy !== null) {
+        localStorage.removeItem(STORAGE_KEY)
+    }
+}
+
+function persistDrafts() {
+    try {
+        localStorage.setItem(DRAFTS_KEY, JSON.stringify(drafts))
+        localStorage.setItem(ACTIVE_DRAFT_KEY, activeDraftId)
+        storageWarningShown = false
+    } catch {
+        if (!storageWarningShown) {
+            storageWarningShown = true
+            showNotification('Could not save drafts. Browser storage is full.', 'error')
+        }
+    }
+}
+
+function getActiveDraft() {
+    return drafts.find(draft => draft.id === activeDraftId)
+}
+
+function saveActiveDraftContent(content) {
+    const draft = getActiveDraft()
+    if (!draft || draft.content === content) return
+    draft.content = content
+    draft.updatedAt = Date.now()
+    persistDrafts()
+}
+
+function uniqueDraftName(base) {
+    const names = new Set(drafts.map(draft => draft.name))
+    if (!names.has(base)) return base
+    let index = 2
+    while (names.has(`${base} ${index}`)) index += 1
+    return `${base} ${index}`
+}
+
+function draftFileName(name) {
+    const safe = name.trim().replace(/[\\/:*?"<>|]/g, '').replace(/\s+/g, '-')
+    return `${safe || 'document'}.md`
+}
+
+function openDraftContent(content) {
+    skipDraftSave = true
+    editor.setValue(content)
+    skipDraftSave = false
+    updatePreview(content)
+}
+
+function selectDraft(id) {
+    if (!editor || id === activeDraftId) return
+    saveActiveDraftContent(editor.getValue())
+    activeDraftId = id
+    openDraftContent(getActiveDraft().content)
+    persistDrafts()
+    document.querySelectorAll('.draft-item').forEach(item => {
+        item.classList.toggle('active', item.dataset.id === activeDraftId)
+    })
+    editor.focus()
+}
+
+function createDraft(name, content) {
+    if (editor) saveActiveDraftContent(editor.getValue())
+    const draft = {
+        id: createId(),
+        name: uniqueDraftName(name),
+        content,
+        updatedAt: Date.now()
+    }
+    drafts.unshift(draft)
+    activeDraftId = draft.id
+    if (editor) openDraftContent(content)
+    persistDrafts()
+    renderDraftList()
+    if (editor) editor.focus()
+}
+
+function deleteDraft(id) {
+    const draft = drafts.find(item => item.id === id)
+    if (!draft) return
+    const message = drafts.length === 1
+        ? `Delete the only draft "${draft.name}"? A new empty draft will replace it.`
+        : `Delete draft "${draft.name}"?`
+    if (!confirm(message)) return
+
+    drafts = drafts.filter(item => item.id !== id)
+    if (drafts.length === 0) {
+        drafts = [{
+            id: createId(),
+            name: 'Untitled',
+            content: '',
+            updatedAt: Date.now()
+        }]
+    }
+    if (!drafts.some(item => item.id === activeDraftId)) {
+        activeDraftId = drafts[0].id
+        openDraftContent(getActiveDraft().content)
+    }
+    persistDrafts()
+    renderDraftList()
+}
+
+function renameDraft(id, name) {
+    const trimmed = name.trim()
+    if (!trimmed) return false
+    const draft = drafts.find(item => item.id === id)
+    if (!draft) return false
+    draft.name = trimmed
+    draft.updatedAt = Date.now()
+    persistDrafts()
+    renderDraftList()
+    return true
+}
+
+function renderDraftList() {
+    const list = document.getElementById('draft-list')
+    list.replaceChildren()
+    drafts.forEach(draft => {
+        const item = document.createElement('li')
+        item.className = draft.id === activeDraftId ? 'draft-item active' : 'draft-item'
+        item.dataset.id = draft.id
+
+        const nameButton = document.createElement('button')
+        nameButton.type = 'button'
+        nameButton.className = 'draft-name'
+        nameButton.textContent = draft.name
+        nameButton.title = 'Open draft. Double-click to rename.'
+        nameButton.addEventListener('click', () => selectDraft(draft.id))
+        nameButton.addEventListener('dblclick', event => {
+            event.preventDefault()
+            startDraftRename(item, draft)
+        })
+
+        const deleteButton = document.createElement('button')
+        deleteButton.type = 'button'
+        deleteButton.className = 'draft-delete'
+        deleteButton.textContent = '×'
+        deleteButton.title = 'Delete draft'
+        deleteButton.addEventListener('click', event => {
+            event.stopPropagation()
+            deleteDraft(draft.id)
+        })
+
+        item.append(nameButton, deleteButton)
+        list.append(item)
+    })
+}
+
+function startDraftRename(item, draft) {
+    const input = document.createElement('input')
+    input.className = 'draft-rename'
+    input.value = draft.name
+    input.setAttribute('aria-label', 'Draft name')
+    item.querySelector('.draft-name').replaceWith(input)
+    input.focus()
+    input.select()
+
+    let closed = false
+    const finish = save => {
+        if (closed) return
+        if (save && !renameDraft(draft.id, input.value)) {
+            input.focus()
+            return
+        }
+        closed = true
+        if (!save) renderDraftList()
+    }
+
+    input.addEventListener('keydown', event => {
+        if (event.key === 'Enter') {
+            event.preventDefault()
+            finish(true)
+        }
+        if (event.key === 'Escape') {
+            event.preventDefault()
+            finish(false)
+        }
+    })
+    input.addEventListener('blur', () => finish(true))
+}
+
+function initDraftsUI() {
+    renderDraftList()
+    document.getElementById('new-draft-btn').addEventListener('click', () => {
+        createDraft('Untitled', '')
+    })
+
+    const fileInput = document.getElementById('open-draft-file')
+    document.getElementById('open-draft-btn').addEventListener('click', () => fileInput.click())
+    fileInput.addEventListener('change', async () => {
+        const file = fileInput.files && fileInput.files[0]
+        fileInput.value = ''
+        if (!file) return
+        try {
+            const content = await file.text()
+            const name = file.name.replace(/\.(md|markdown|txt)$/i, '') || 'Untitled'
+            createDraft(name, content)
+        } catch {
+            showNotification('Could not read that file', 'error')
+        }
+    })
 }
 
 function downloadFile() {
@@ -284,7 +541,7 @@ function downloadFile() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = 'document.md'
+    a.download = draftFileName(getActiveDraft().name)
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
@@ -303,7 +560,6 @@ function copyToClipboard() {
 function clearEditor() {
     if (confirm('Are you sure you want to clear the editor?')) {
         editor.setValue('')
-        localStorage.removeItem(STORAGE_KEY)
     }
 }
 
@@ -409,22 +665,36 @@ function insertHeading(level) {
     editor.focus()
 }
 
-function insertList(ordered = false) {
+function insertLinePrefix(prefix, placeholder) {
     const position = editor.getPosition()
     const lineContent = editor.getModel().getLineContent(position.lineNumber)
-    const prefix = ordered ? '1. ' : '- '
-    
+
     if (lineContent.trim() === '') {
-        insertAtCursor(prefix + 'List item', 'List item')
+        insertAtCursor(prefix + placeholder, placeholder)
     } else {
-        const range = new monaco.Range(position.lineNumber, 1, position.lineNumber, 1)
-        editor.executeEdits('list', [{
-            range: range,
+        editor.executeEdits('prefix', [{
+            range: new monaco.Range(position.lineNumber, 1, position.lineNumber, 1),
             text: prefix,
             forceMoveMarkers: true
         }])
     }
     editor.focus()
+}
+
+function insertList(ordered = false) {
+    insertLinePrefix(ordered ? '1. ' : '- ', 'List item')
+}
+
+function insertTask() {
+    insertLinePrefix('- [ ] ', 'Task')
+}
+
+function insertQuote() {
+    insertLinePrefix('> ', 'Quote')
+}
+
+function insertHorizontalRule() {
+    insertAtCursor('\n---\n')
 }
 
 function insertLink() {
@@ -771,10 +1041,73 @@ function initFormattingButtons() {
     
     document.getElementById('ul-btn').addEventListener('click', () => insertList(false))
     document.getElementById('ol-btn').addEventListener('click', () => insertList(true))
+    document.getElementById('task-btn').addEventListener('click', insertTask)
+    document.getElementById('quote-btn').addEventListener('click', insertQuote)
     
     document.getElementById('link-btn').addEventListener('click', insertLink)
     document.getElementById('image-btn').addEventListener('click', insertImage)
     document.getElementById('codeblock-btn').addEventListener('click', insertCodeBlock)
+    document.getElementById('rule-btn').addEventListener('click', insertHorizontalRule)
+}
+
+function setDraftsHidden(hidden) {
+    document.getElementById('drafts-panel').classList.toggle('is-collapsed', hidden)
+    document.getElementById('show-drafts-btn').hidden = !hidden
+    localStorage.setItem(DRAFTS_HIDDEN_KEY, hidden ? '1' : '0')
+    if (editor) editor.layout()
+}
+
+function applySplit(editorPercent) {
+    const editorPanel = document.querySelector('.editor-panel')
+    const previewPanel = document.querySelector('.preview-panel')
+    editorPanel.style.flex = `${editorPercent} 1 0%`
+    previewPanel.style.flex = `${100 - editorPercent} 1 0%`
+}
+
+function initPaneResize() {
+    const container = document.querySelector('.editor-container')
+    const resizer = document.getElementById('pane-resizer')
+    const saved = Number(localStorage.getItem(SPLIT_KEY))
+    if (saved >= 20 && saved <= 80) applySplit(saved)
+
+    resizer.addEventListener('pointerdown', event => {
+        event.preventDefault()
+        resizer.classList.add('is-dragging')
+        document.body.classList.add('is-resizing')
+        const stacked = getComputedStyle(container).flexDirection === 'column'
+
+        const onMove = moveEvent => {
+            const bounds = container.getBoundingClientRect()
+            const draftsPanel = document.getElementById('drafts-panel')
+            const draftsSize = draftsPanel.classList.contains('is-collapsed')
+                ? 0
+                : (stacked ? draftsPanel.getBoundingClientRect().height : draftsPanel.getBoundingClientRect().width)
+            const available = (stacked ? bounds.height : bounds.width) - draftsSize - (stacked ? resizer.offsetHeight : resizer.offsetWidth)
+            const offset = (stacked ? moveEvent.clientY - bounds.top : moveEvent.clientX - bounds.left) - draftsSize
+            const percent = Math.min(80, Math.max(20, (offset / available) * 100))
+            applySplit(percent)
+            resizer.dataset.percent = String(Math.round(percent))
+        }
+
+        const onUp = () => {
+            resizer.classList.remove('is-dragging')
+            document.body.classList.remove('is-resizing')
+            document.removeEventListener('pointermove', onMove)
+            document.removeEventListener('pointerup', onUp)
+            if (resizer.dataset.percent) localStorage.setItem(SPLIT_KEY, resizer.dataset.percent)
+            if (editor) editor.layout()
+        }
+
+        document.addEventListener('pointermove', onMove)
+        document.addEventListener('pointerup', onUp)
+    })
+}
+
+function initLayout() {
+    setDraftsHidden(localStorage.getItem(DRAFTS_HIDDEN_KEY) === '1')
+    document.getElementById('hide-drafts-btn').addEventListener('click', () => setDraftsHidden(true))
+    document.getElementById('show-drafts-btn').addEventListener('click', () => setDraftsHidden(false))
+    initPaneResize()
 }
 
 async function callOpenAI(content) {
@@ -844,6 +1177,16 @@ ${content}
 Return only the formatted content.`
 
     const prompt = isRedmineMode ? redminePrompt : standardPrompt
+    const skill = getSelectedSkill()
+    const model = getActiveModel()
+    const body = {
+        model,
+        messages: skill
+            ? buildSkillMessages(content, skill, isRedmineMode)
+            : [{ role: 'user', content: prompt }],
+        max_completion_tokens: isReasoningModel(model) ? 16000 : 4000
+    }
+    if (!isReasoningModel(model)) body.temperature = 0.3
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
@@ -851,17 +1194,7 @@ Return only the formatted content.`
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${apiKey}`
         },
-        body: JSON.stringify({
-            model: 'gpt-4o-mini',
-            messages: [
-                {
-                    role: 'user',
-                    content: prompt
-                }
-            ],
-            temperature: 0.3,
-            max_tokens: 4000
-        })
+        body: JSON.stringify(body)
     })
 
     if (!response.ok) {
@@ -870,7 +1203,74 @@ Return only the formatted content.`
     }
 
     const data = await response.json()
-    return data.choices[0].message.content.trim()
+    const text = data.choices?.[0]?.message?.content
+    if (!text || !text.trim()) {
+        throw new Error('The model returned an empty response.')
+    }
+    return text.trim()
+}
+
+function isReasoningModel(model) {
+    return /^o\d/.test(model)
+}
+
+function getActiveModel() {
+    const select = document.getElementById('openai-model')
+    if (select) {
+        const model = select.value === 'custom'
+            ? document.getElementById('openai-model-custom').value.trim()
+            : select.value
+        if (model) return model
+    }
+    return localStorage.getItem(AI_MODEL_STORAGE) || DEFAULT_MODEL
+}
+
+function persistModel() {
+    const model = getActiveModel()
+    localStorage.setItem(AI_MODEL_STORAGE, model)
+}
+
+function loadSkills() {
+    const stored = readJson(SKILLS_KEY, [])
+    skills = Array.isArray(stored) ? stored.filter(skill => skill && skill.id && skill.name && skill.instruction) : []
+}
+
+function persistSkills() {
+    localStorage.setItem(SKILLS_KEY, JSON.stringify(skills))
+}
+
+function getSelectedSkill() {
+    const selectedId = localStorage.getItem(ACTIVE_SKILL_KEY)
+    return skills.find(skill => skill.id === selectedId) || null
+}
+
+function setSelectedSkillId(id) {
+    if (id) localStorage.setItem(ACTIVE_SKILL_KEY, id)
+    else localStorage.removeItem(ACTIVE_SKILL_KEY)
+}
+
+function buildSkillMessages(content, skill, isRedmineMode) {
+    const syntax = isRedmineMode
+        ? 'Redmine Markdown: _text_ is underline, *text* is italic, **text** is bold.'
+        : 'Standard Markdown: *text* or _text_ is italic, **text** or __text__ is bold, `text` is code.'
+
+    return [
+        {
+            role: 'system',
+            content: [
+                'You transform the user text and return only the finished result.',
+                'No preamble, no explanation, no closing note, and no code fence around the whole result.',
+                'Follow the instruction exactly. If it defines headings or an order, use that structure and do not add other sections.',
+                'Do not invent facts, links, or requirements that are not in the text or the instruction.',
+                'Unless the instruction explicitly says to change them, copy links, images, and URLs character for character.',
+                syntax
+            ].join('\n')
+        },
+        {
+            role: 'user',
+            content: `Instruction:\n${skill.instruction}\n\nText:\n${content}`
+        }
+    ]
 }
 
 function initAIModal() {
@@ -881,10 +1281,130 @@ function initAIModal() {
     const enhanceNowBtn = document.getElementById('enhance-now')
     const cancelSettingsBtn = document.getElementById('cancel-ai-settings')
     const apiKeyInput = document.getElementById('openai-key')
+    const modelSelect = document.getElementById('openai-model')
+    const modelCustomInput = document.getElementById('openai-model-custom')
+    const skillSelect = document.getElementById('ai-skill-select')
+    const skillList = document.getElementById('skill-list')
+    const skillEditor = document.getElementById('skill-editor')
+    const skillNameInput = document.getElementById('skill-name')
+    const skillInstructionInput = document.getElementById('skill-instruction')
+    let editingSkillId = null
+
+    function updateEnhanceLabel() {
+        const skill = getSelectedSkill()
+        enhanceNowBtn.textContent = skill ? `Run: ${skill.name}` : '🤖 Enhance Current Content'
+    }
+
+    function hideSkillEditor() {
+        editingSkillId = null
+        skillEditor.hidden = true
+        skillNameInput.value = ''
+        skillInstructionInput.value = ''
+    }
+
+    function openSkillEditor(skill) {
+        editingSkillId = skill ? skill.id : null
+        skillNameInput.value = skill ? skill.name : ''
+        skillInstructionInput.value = skill ? skill.instruction : ''
+        skillEditor.hidden = false
+        skillNameInput.focus()
+    }
+
+    function renderSkillControls() {
+        const selectedId = getSelectedSkill() ? getSelectedSkill().id : ''
+        skillSelect.replaceChildren()
+
+        const defaultOption = document.createElement('option')
+        defaultOption.value = ''
+        defaultOption.textContent = 'Default enhance'
+        skillSelect.append(defaultOption)
+
+        skills.forEach(skill => {
+            const option = document.createElement('option')
+            option.value = skill.id
+            option.textContent = skill.name
+            skillSelect.append(option)
+        })
+
+        skillSelect.value = selectedId
+        skillList.replaceChildren()
+
+        if (skills.length === 0) {
+            const empty = document.createElement('p')
+            empty.className = 'skill-empty'
+            empty.textContent = 'No saved skills yet.'
+            skillList.append(empty)
+            updateEnhanceLabel()
+            return
+        }
+
+        skills.forEach(skill => {
+            const row = document.createElement('div')
+            row.className = 'skill-row'
+
+            const name = document.createElement('span')
+            name.className = 'skill-row-name'
+            name.textContent = skill.name
+
+            const editButton = document.createElement('button')
+            editButton.type = 'button'
+            editButton.className = 'secondary-btn small-btn'
+            editButton.textContent = 'Edit'
+            editButton.addEventListener('click', () => openSkillEditor(skill))
+
+            const deleteButton = document.createElement('button')
+            deleteButton.type = 'button'
+            deleteButton.className = 'secondary-btn small-btn'
+            deleteButton.textContent = 'Delete'
+            deleteButton.addEventListener('click', () => deleteSkill(skill.id))
+
+            row.append(name, editButton, deleteButton)
+            skillList.append(row)
+        })
+        updateEnhanceLabel()
+    }
+
+    function deleteSkill(id) {
+        const skill = skills.find(item => item.id === id)
+        if (!skill || !confirm(`Delete skill "${skill.name}"?`)) return
+        skills = skills.filter(item => item.id !== id)
+        if (localStorage.getItem(ACTIVE_SKILL_KEY) === id) setSelectedSkillId('')
+        if (editingSkillId === id) hideSkillEditor()
+        persistSkills()
+        renderSkillControls()
+    }
+
+    function saveSkillFromForm() {
+        const name = skillNameInput.value.trim()
+        const instruction = skillInstructionInput.value.trim()
+        if (!name || !instruction) {
+            showNotification('Skill needs a name and an instruction', 'error')
+            return
+        }
+
+        if (editingSkillId) {
+            const skill = skills.find(item => item.id === editingSkillId)
+            if (!skill) return
+            skill.name = name
+            skill.instruction = instruction
+            setSelectedSkillId(skill.id)
+        } else {
+            const skill = { id: createId(), name, instruction }
+            skills.push(skill)
+            setSelectedSkillId(skill.id)
+        }
+
+        persistSkills()
+        hideSkillEditor()
+        renderSkillControls()
+        showNotification('Skill saved')
+    }
     
     function showAiModal() {
         aiModal.style.display = 'flex'
         loadAISettings()
+        hideSkillEditor()
+        renderSkillControls()
     }
     
     function hideAiModal() {
@@ -900,6 +1420,17 @@ function initAIModal() {
             apiKeyInput.value = ''
             enhanceNowBtn.disabled = true
         }
+
+        const savedModel = localStorage.getItem(AI_MODEL_STORAGE) || DEFAULT_MODEL
+        if (KNOWN_MODELS.includes(savedModel)) {
+            modelSelect.value = savedModel
+            modelCustomInput.value = ''
+            modelCustomInput.hidden = true
+        } else {
+            modelSelect.value = 'custom'
+            modelCustomInput.value = savedModel
+            modelCustomInput.hidden = false
+        }
     }
     
     function saveAISettings() {
@@ -913,8 +1444,14 @@ function initAIModal() {
             showNotification('API key should start with "sk-"', 'error')
             return
         }
+
+        if (modelSelect.value === 'custom' && !modelCustomInput.value.trim()) {
+            showNotification('Enter a model id', 'error')
+            return
+        }
         
         localStorage.setItem(AI_KEY_STORAGE, apiKey)
+        persistModel()
         enhanceNowBtn.disabled = false
         showNotification('AI settings saved successfully!')
     }
@@ -926,20 +1463,23 @@ function initAIModal() {
             return
         }
         
-        const originalBtnText = enhanceNowBtn.textContent
-        enhanceNowBtn.textContent = '🔄 Enhancing...'
+        enhanceNowBtn.textContent = 'Enhancing...'
         enhanceNowBtn.disabled = true
         
         try {
+            const skill = getSelectedSkill()
+            const model = getActiveModel()
+            persistModel()
             const enhancedContent = await callOpenAI(content)
-            showDiffModal(content, enhancedContent)
+            const title = skill ? `AI: ${skill.name} (${model})` : `AI Enhancement Preview (${model})`
+            showDiffModal(content, enhancedContent, title)
             hideAiModal()
         } catch (error) {
             console.error('AI Enhancement error:', error)
             showNotification(`Enhancement failed: ${error.message}`, 'error')
         } finally {
-            enhanceNowBtn.textContent = originalBtnText
-            enhanceNowBtn.disabled = false
+            enhanceNowBtn.disabled = apiKeyInput.value.trim().length === 0
+            updateEnhanceLabel()
         }
     }
     
@@ -948,6 +1488,18 @@ function initAIModal() {
     cancelSettingsBtn.addEventListener('click', hideAiModal)
     saveSettingsBtn.addEventListener('click', saveAISettings)
     enhanceNowBtn.addEventListener('click', enhanceContent)
+    document.getElementById('new-skill-btn').addEventListener('click', () => openSkillEditor(null))
+    document.getElementById('save-skill-btn').addEventListener('click', saveSkillFromForm)
+    document.getElementById('cancel-skill-btn').addEventListener('click', hideSkillEditor)
+    skillSelect.addEventListener('change', () => {
+        setSelectedSkillId(skillSelect.value)
+        updateEnhanceLabel()
+    })
+    modelSelect.addEventListener('change', () => {
+        modelCustomInput.hidden = modelSelect.value !== 'custom'
+        if (modelSelect.value !== 'custom') persistModel()
+    })
+    modelCustomInput.addEventListener('change', persistModel)
     
     // Enable enhance button when API key is entered
     apiKeyInput.addEventListener('input', (e) => {
@@ -958,6 +1510,8 @@ function initAIModal() {
     aiModal.addEventListener('click', (e) => {
         if (e.target === aiModal) hideAiModal()
     })
+
+    loadAISettings()
 }
 
 function initHelpModal() {
@@ -1091,7 +1645,8 @@ function escapeHtml(text) {
     return div.innerHTML
 }
 
-function showDiffModal(originalContent, enhancedContent) {
+function showDiffModal(originalContent, enhancedContent, title = 'AI Enhancement Preview') {
+    document.querySelector('#ai-diff-modal .modal-header h3').textContent = title
     const diffModal = document.getElementById('ai-diff-modal')
     const originalDiv = document.getElementById('original-content')
     const enhancedDiv = document.getElementById('enhanced-content')
@@ -1246,10 +1801,14 @@ function initEventListeners() {
 }
 
 async function init() {
+    loadDraftState()
+    loadSkills()
     const isRedmineMode = getMarkdownMode()
     markdownProcessor = createMarkdownProcessor(isRedmineMode)
     initEditor()
     initEventListeners()
+    initDraftsUI()
+    initLayout()
     
     // Initialize button tooltips based on mode
     updateButtonTooltips(isRedmineMode)
