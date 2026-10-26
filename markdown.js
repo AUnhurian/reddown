@@ -79,6 +79,30 @@ function underlinePlugin(md) {
     md.renderer.rules.underline_close = () => '</u>'
 }
 
+function taskListPlugin(md) {
+    md.core.ruler.after('inline', 'task-list', state => {
+        const tokens = state.tokens
+        for (let index = 2; index < tokens.length; index++) {
+            if (tokens[index].type !== 'inline') continue
+            if (tokens[index - 1].type !== 'paragraph_open') continue
+            if (tokens[index - 2].type !== 'list_item_open') continue
+
+            const children = tokens[index].children
+            if (!children || children.length === 0 || children[0].type !== 'text') continue
+
+            const match = /^\[([ xX])\]\s+/.exec(children[0].content)
+            if (!match) continue
+
+            children[0].content = children[0].content.slice(match[0].length)
+            const checkbox = new state.Token('html_inline', '', 0)
+            const checked = match[1].toLowerCase() === 'x' ? ' checked' : ''
+            checkbox.content = `<input class="task-checkbox" type="checkbox" disabled${checked}>`
+            children.unshift(checkbox)
+            tokens[index - 2].attrJoin('class', 'task-list-item')
+        }
+    })
+}
+
 export function createMarkdownProcessor(isRedmineMode = true) {
     const md = new MarkdownIt({
         html: true,
@@ -86,12 +110,13 @@ export function createMarkdownProcessor(isRedmineMode = true) {
         typographer: true,
         breaks: true
     })
-    
-    // Only use underline plugin in Redmine mode
+
+    md.use(taskListPlugin)
+
     if (isRedmineMode) {
         md.use(underlinePlugin)
     }
-    
+
     return md
 }
 

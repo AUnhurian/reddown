@@ -1050,6 +1050,17 @@ body:not(.dark-theme) #preview-content pre {
     margin-bottom: 4px;
 }
 
+#preview-content li.task-list-item {
+    list-style: none;
+}
+
+#preview-content .task-checkbox {
+    margin: 0 0.45em 0.15em 0;
+    vertical-align: middle;
+    accent-color: #0066cc;
+    pointer-events: none;
+}
+
 #preview-content table {
     border-collapse: collapse;
     margin-bottom: 16px;
